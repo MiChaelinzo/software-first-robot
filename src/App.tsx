@@ -13,6 +13,15 @@ import { VisualizationControls } from '@/components/VisualizationControls'
 import { HeatTrailStats } from '@/components/HeatTrailStats'
 import { Warehouse3D, type Warehouse3DHandle } from '@/components/Warehouse3D'
 import { View3DControls } from '@/components/View3DControls'
+import { PredictiveAnalytics } from '@/components/PredictiveAnalytics'
+import { RobotHistoryPanel } from '@/components/RobotHistoryPanel'
+import { ScenarioGenerator } from '@/components/ScenarioGenerator'
+import { FleetManagementPanel } from '@/components/FleetManagementPanel'
+import { EfficiencyOptimizer } from '@/components/EfficiencyOptimizer'
+import { AdvancedHeatMap } from '@/components/AdvancedHeatMap'
+import { PerformanceGraph } from '@/components/PerformanceGraph'
+import { SystemDashboard } from '@/components/SystemDashboard'
+import { DataExport } from '@/components/DataExport'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card } from '@/components/ui/card'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -108,9 +117,34 @@ function App() {
     hotspots: 0
   })
 
+  const [robotHistory, setRobotHistory] = useKV<any[]>('robot_history', [])
+  const [trafficHeatData, setTrafficHeatData] = useState<number[][]>([])
+  const [speedHeatData, setSpeedHeatData] = useState<number[][]>([])
+  const [collisionHeatData, setCollisionHeatData] = useState<number[][]>([])
+  const [efficiencyHeatData, setEfficiencyHeatData] = useState<number[][]>([])
+
   const safeRobots = robots || initialRobots
   const safeTasks = tasks || []
   const safeMetrics = metrics || initialMetrics
+  const safeHistory = robotHistory || []
+
+  useEffect(() => {
+    const initHeatData = () => {
+      const traffic: number[][] = Array(GRID_HEIGHT).fill(null).map(() => Array(GRID_WIDTH).fill(0))
+      const speed: number[][] = Array(GRID_HEIGHT).fill(null).map(() => Array(GRID_WIDTH).fill(0))
+      const collision: number[][] = Array(GRID_HEIGHT).fill(null).map(() => Array(GRID_WIDTH).fill(0))
+      const efficiency: number[][] = Array(GRID_HEIGHT).fill(null).map(() => Array(GRID_WIDTH).fill(0.5))
+      
+      setTrafficHeatData(traffic)
+      setSpeedHeatData(speed)
+      setCollisionHeatData(collision)
+      setEfficiencyHeatData(efficiency)
+    }
+    
+    if (trafficHeatData.length === 0) {
+      initHeatData()
+    }
+  }, [])
 
   const assignTasks = useCallback(() => {
     setTasks((currentTasks = []) => {
@@ -179,6 +213,26 @@ function App() {
           }))
         }
 
+        setTrafficHeatData(prev => {
+          const updated = prev.map(row => [...row])
+          const x = Math.floor(robot.position.x)
+          const y = Math.floor(robot.position.y)
+          if (x >= 0 && x < GRID_WIDTH && y >= 0 && y < GRID_HEIGHT) {
+            updated[y][x] = Math.min(updated[y][x] + 0.1, 10)
+          }
+          return updated
+        })
+
+        setSpeedHeatData(prev => {
+          const updated = prev.map(row => [...row])
+          const x = Math.floor(robot.position.x)
+          const y = Math.floor(robot.position.y)
+          if (x >= 0 && x < GRID_WIDTH && y >= 0 && y < GRID_HEIGHT) {
+            updated[y][x] = (updated[y][x] + robot.speed) / 2
+          }
+          return updated
+        })
+
         return updatedRobot
       })
 
@@ -208,6 +262,27 @@ function App() {
                 y: updatedRobots.find(r => r.id === event.robotIds[0])?.position.y || 0
               }
               congestionSystem.recordCollision(avgPos)
+              
+              setCollisionHeatData(prev => {
+                const updated = prev.map(row => [...row])
+                const x = Math.floor(avgPos.x)
+                const y = Math.floor(avgPos.y)
+                if (x >= 0 && x < GRID_WIDTH && y >= 0 && y < GRID_HEIGHT) {
+                  updated[y][x] = Math.min(updated[y][x] + 1, 10)
+                }
+                return updated
+              })
+
+              setRobotHistory((currentHistory = []) => [
+                ...currentHistory,
+                {
+                  robotId: event.robotIds[0],
+                  timestamp: Date.now(),
+                  event: 'collision_avoided' as const,
+                  details: `Critical avoidance with ${event.robotIds[1]}`,
+                  position: avgPos
+                }
+              ].slice(-100))
             }
           })
         }
@@ -234,6 +309,17 @@ function App() {
       const updatedTasks = currentTasks.map(task => {
         if (task.status === 'assigned') {
           task.status = 'in-progress'
+          
+          setRobotHistory((currentHistory = []) => [
+            ...currentHistory,
+            {
+              robotId: task.assignedRobotId || '',
+              timestamp: Date.now(),
+              event: 'task_assigned' as const,
+              details: `${task.type} task at (${task.position.x}, ${task.position.y})`,
+              position: task.position
+            }
+          ].slice(-100))
         }
         
         if (task.status === 'completed' && task.completedAt && !task.assignedRobotId?.includes('processed')) {
@@ -256,6 +342,27 @@ function App() {
               tasksCompleted: currentMetrics.tasksCompleted + 1,
               averageCompletionTime: avgTime
             }
+          })
+
+          setRobotHistory((currentHistory = []) => [
+            ...currentHistory,
+            {
+              robotId: task.assignedRobotId || '',
+              timestamp: Date.now(),
+              event: 'task_completed' as const,
+              details: `Completed ${task.type} in ${completionTime.toFixed(1)}s`,
+              position: task.position
+            }
+          ].slice(-100))
+
+          setEfficiencyHeatData(prev => {
+            const updated = prev.map(row => [...row])
+            const x = Math.floor(task.position.x)
+            const y = Math.floor(task.position.y)
+            if (x >= 0 && x < GRID_WIDTH && y >= 0 && y < GRID_HEIGHT) {
+              updated[y][x] = Math.min((updated[y][x] + 0.1), 1)
+            }
+            return updated
           })
 
           task.assignedRobotId = task.assignedRobotId + '-processed'
@@ -310,6 +417,7 @@ function App() {
     setTasks([])
     setMetrics(initialMetrics)
     setCollisionEvents([])
+    setRobotHistory([])
     completionTimesRef.current = []
     congestionSystem.reset()
     heatTrailSystem.reset()
@@ -320,6 +428,10 @@ function App() {
       avgSpeed: 0,
       hotspots: 0
     })
+    setTrafficHeatData(Array(GRID_HEIGHT).fill(null).map(() => Array(GRID_WIDTH).fill(0)))
+    setSpeedHeatData(Array(GRID_HEIGHT).fill(null).map(() => Array(GRID_WIDTH).fill(0)))
+    setCollisionHeatData(Array(GRID_HEIGHT).fill(null).map(() => Array(GRID_WIDTH).fill(0)))
+    setEfficiencyHeatData(Array(GRID_HEIGHT).fill(null).map(() => Array(GRID_WIDTH).fill(0.5)))
     toast.info('Simulation reset')
   }
 
@@ -394,6 +506,90 @@ Analyze this robotics system and provide 2-3 specific, actionable optimization s
     return () => window.removeEventListener('keydown', handleKeyPress)
   }, [])
 
+  const handleRobotSpeedAdjust = (robotId: string, speed: number) => {
+    setRobots((currentRobots = initialRobots) =>
+      currentRobots.map(r => (r.id === robotId ? { ...r, speed } : r))
+    )
+  }
+
+  const handleRobotPause = (robotId: string) => {
+    setRobots((currentRobots = initialRobots) =>
+      currentRobots.map(r => (r.id === robotId ? { ...r, status: 'idle' as const, path: [] } : r))
+    )
+  }
+
+  const handleRobotResume = (robotId: string) => {
+    setRobots((currentRobots = initialRobots) =>
+      currentRobots.map(r => (r.id === robotId ? { ...r, status: 'moving' as const } : r))
+    )
+  }
+
+  const handleRobotRecall = (robotId: string) => {
+    setRobots((currentRobots = initialRobots) =>
+      currentRobots.map(r =>
+        r.id === robotId
+          ? { ...r, status: 'charging' as const, targetPosition: { x: 1, y: 1 }, path: [] }
+          : r
+      )
+    )
+  }
+
+  const handleScenarioApply = (scenario: any) => {
+    const newRobots: Robot[] = []
+    for (let i = 0; i < scenario.robotCount; i++) {
+      const startX = 2 + (i % 6) * 2
+      const startY = 2 + Math.floor(i / 6) * 3
+      newRobots.push(
+        createRobot(`robot-${String(i + 1).padStart(2, '0')}`, { x: startX, y: startY }, ROBOT_COLORS[i % ROBOT_COLORS.length])
+      )
+    }
+    setRobots(newRobots)
+    setTasks([])
+    setMetrics(initialMetrics)
+    setCollisionEvents([])
+    setRobotHistory([])
+    congestionSystem.reset()
+    heatTrailSystem.reset()
+  }
+
+  const handleOptimization = (optimization: any) => {
+    switch (optimization.type) {
+      case 'increase_task_rate':
+        for (let i = 0; i < 5; i++) {
+          setTimeout(() => handleAddTask(), i * 500)
+        }
+        break
+      case 'optimize_traffic_flow':
+        congestionSystem.reset()
+        toast.success('Traffic flow patterns reset for relearning')
+        break
+      case 'increase_speed_zones':
+        setRobots((currentRobots = initialRobots) =>
+          currentRobots.map(r => ({ ...r, speed: Math.min(r.speed * 1.2, 3) }))
+        )
+        break
+      case 'optimize_charging_schedule':
+        setRobots((currentRobots = initialRobots) =>
+          currentRobots.map(r =>
+            r.battery < 30 ? { ...r, status: 'charging' as const, path: [] } : r
+          )
+        )
+        break
+      case 'apply_path_learning':
+        setMetrics((currentMetrics = initialMetrics) => ({
+          ...currentMetrics,
+          learningRate: Math.min(currentMetrics.learningRate * 1.5, 0.3)
+        }))
+        break
+    }
+  }
+
+  const handleImportData = (data: any) => {
+    if (data.robots) setRobots(data.robots)
+    if (data.tasks) setTasks(data.tasks)
+    if (data.metrics) setMetrics(data.metrics)
+  }
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Toaster position="top-right" theme="dark" />
@@ -427,10 +623,11 @@ Analyze this robotics system and provide 2-3 specific, actionable optimization s
         />
 
         <Tabs defaultValue="simulation" className="space-y-4">
-          <TabsList className="grid w-full max-w-2xl grid-cols-3">
+          <TabsList className="grid w-full max-w-3xl grid-cols-4">
             <TabsTrigger value="simulation">2D View</TabsTrigger>
             <TabsTrigger value="3d">3D View</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            <TabsTrigger value="management">Management</TabsTrigger>
           </TabsList>
 
           <TabsContent value="simulation" className="space-y-6">
@@ -551,7 +748,26 @@ Analyze this robotics system and provide 2-3 specific, actionable optimization s
           </TabsContent>
 
           <TabsContent value="analytics" className="space-y-6">
-            <MetricsDashboard metrics={safeMetrics} />
+            <SystemDashboard
+              metrics={safeMetrics}
+              robotCount={safeRobots.length}
+              activeRobots={safeRobots.filter(r => r.status === 'moving').length}
+              isRunning={isRunning}
+            />
+
+            <PerformanceGraph metrics={safeMetrics} isRunning={isRunning} />
+
+            <div className="grid lg:grid-cols-2 gap-6">
+              <MetricsDashboard metrics={safeMetrics} />
+              <PredictiveAnalytics
+                tasksCompleted={safeMetrics.tasksCompleted}
+                averageCompletionTime={safeMetrics.averageCompletionTime}
+                robotUtilization={safeMetrics.robotUtilization}
+                totalDistance={safeMetrics.totalDistance}
+                collisionsAvoided={safeMetrics.collisionsAvoided}
+                efficiencyGain={safeMetrics.efficiencyGain}
+              />
+            </div>
 
             <div className="grid lg:grid-cols-2 gap-6">
               <AdaptiveLearningPanel
@@ -636,7 +852,50 @@ Analyze this robotics system and provide 2-3 specific, actionable optimization s
               </Card>
             </div>
 
+            <RobotHistoryPanel robots={safeRobots} history={safeHistory} />
+
+            <AdvancedHeatMap
+              gridWidth={GRID_WIDTH}
+              gridHeight={GRID_HEIGHT}
+              trafficData={trafficHeatData}
+              speedData={speedHeatData}
+              collisionData={collisionHeatData}
+              efficiencyData={efficiencyHeatData}
+            />
+
             <CollisionMonitor events={collisionEvents} />
+          </TabsContent>
+
+          <TabsContent value="management" className="space-y-6">
+            <div className="grid lg:grid-cols-3 gap-6">
+              <ScenarioGenerator
+                onApplyScenario={handleScenarioApply}
+                isRunning={isRunning}
+              />
+              <EfficiencyOptimizer
+                robots={safeRobots}
+                tasks={safeTasks}
+                metrics={safeMetrics}
+                onOptimize={handleOptimization}
+                isRunning={isRunning}
+              />
+              <DataExport
+                robots={safeRobots}
+                tasks={safeTasks}
+                metrics={safeMetrics}
+                onImport={handleImportData}
+                isRunning={isRunning}
+              />
+            </div>
+
+            <FleetManagementPanel
+              robots={safeRobots}
+              onRobotSpeedAdjust={handleRobotSpeedAdjust}
+              onRobotPause={handleRobotPause}
+              onRobotResume={handleRobotResume}
+              onRobotRecall={handleRobotRecall}
+              isRunning={isRunning}
+            />
           </TabsContent>
         </Tabs>
       </div>

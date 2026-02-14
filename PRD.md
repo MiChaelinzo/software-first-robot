@@ -1,14 +1,14 @@
 # Planning Guide
 
-An autonomous warehouse robot simulation platform that demonstrates intelligent pathfinding, task prioritization, and adaptive decision-making in a dynamic fulfillment center environment.
+An autonomous warehouse robot simulation platform that demonstrates intelligent pathfinding, task prioritization, adaptive decision-making, and comprehensive fleet management in a dynamic fulfillment center environment. Now featuring advanced analytics, predictive insights, real-time optimization, and multi-layer heat mapping for unprecedented operational intelligence.
 
 **Experience Qualities**:
-1. **Intelligent** - The system should feel smart and autonomous, with robots making real-time decisions based on environmental state and task priorities
-2. **Transparent** - Users should clearly see the robot's decision-making process, current objectives, and system performance metrics in real-time
-3. **Dynamic** - The simulation should feel alive with continuous activity, real-time updates, and responsive behavior to user interactions
+1. **Intelligent** - The system feels smart and autonomous with robots making real-time decisions, AI-powered optimizations, and predictive analytics forecasting performance trends
+2. **Transparent** - Users clearly see robot decision-making, task flows, system performance metrics, historical activity logs, and multi-dimensional heat maps revealing spatial patterns
+3. **Dynamic** - The simulation feels alive with continuous activity, real-time graph updates, responsive behavior, scenario generation, and adaptive learning improvements
 
 **Complexity Level**: Complex Application (advanced functionality, likely with multiple views)
-This is a sophisticated robotics simulation requiring real-time pathfinding algorithms, state management for multiple autonomous agents, collision detection, task queue management, performance analytics, and AI-driven decision making.
+This is a sophisticated robotics simulation requiring real-time pathfinding algorithms, state management for multiple autonomous agents, collision detection, task queue management, performance analytics, AI-driven decision making, predictive modeling, fleet command operations, multi-layer spatial analytics, and comprehensive data export capabilities.
 
 ## Essential Features
 
@@ -54,7 +54,47 @@ This is a sophisticated robotics simulation requiring real-time pathfinding algo
 - **Progression**: User places obstacles/zones → Environment validates layout → Pathfinding updates → Robots adapt navigation
 - **Success criteria**: Environment updates affect robot behavior, layout persists, zones function as intended
 
-### AI-Powered Decision Engine
+### Real-Time Efficiency Optimizer
+- **Functionality**: AI-powered analysis system that continuously evaluates fleet performance and suggests actionable optimizations
+- **Purpose**: Provide intelligent, data-driven recommendations to improve warehouse efficiency in real-time
+- **Trigger**: User clicks "Analyze System" button or system auto-analyzes every 5 minutes
+- **Progression**: Collects metrics → Analyzes patterns → Identifies bottlenecks → Generates suggestions with confidence scores → User applies optimization → System measures impact
+- **Success criteria**: Meaningful suggestions generated, clear impact ratings, one-click application, measurable efficiency improvements after application
+
+### Predictive Analytics Dashboard
+- **Functionality**: Machine learning-based prediction system that forecasts task throughput, fleet efficiency, path optimization, and safety scores
+- **Purpose**: Provide forward-looking insights into system performance trends and potential issues before they occur
+- **Trigger**: Continuous real-time analysis with 3-second refresh intervals
+- **Progression**: Analyzes historical data → Calculates trend trajectories → Predicts future performance → Assigns confidence scores → Provides recommendations
+- **Success criteria**: Accurate trend predictions, high confidence scores, proactive problem identification, actionable recommendations
+
+### Robot Activity History Tracker
+- **Functionality**: Comprehensive event logging system tracking all robot activities, task assignments, collisions, and state changes
+- **Purpose**: Enable detailed performance analysis, debugging, and identification of patterns in robot behavior
+- **Trigger**: Automatic logging of all significant robot events during simulation
+- **Progression**: Event occurs → Details captured with timestamp and position → Added to history log → Organized by robot or event type → Statistics calculated
+- **Success criteria**: Complete event history, searchable by robot or event type, statistical summaries, maintains last 100 events for performance
+
+### Fleet Command Center
+- **Functionality**: Advanced robot management interface with individual speed control, pause/resume, recall to base, and real-time status monitoring
+- **Purpose**: Give operators granular control over individual robots for testing, emergency response, or optimization
+- **Trigger**: User accesses Management tab and interacts with robot controls
+- **Progression**: User selects robot → Views detailed status → Adjusts speed slider or clicks action button → Robot responds immediately → History logged
+- **Success criteria**: Responsive individual controls, real-time status updates, smooth speed adjustments, successful pause/resume/recall operations
+
+### Dynamic Scenario Generator
+- **Functionality**: Pre-configured simulation scenarios ranging from standard operations to chaos mode, with adjustable robot counts and task rates
+- **Purpose**: Enable rapid testing of different operational conditions and stress-testing of the system
+- **Trigger**: User selects scenario from preset list or clicks random scenario generator
+- **Progression**: User selects scenario → System validates simulation is stopped → Applies robot count and task rate → Resets metrics and state → User starts simulation
+- **Success criteria**: Instant scenario application, clear difficulty ratings, diverse testing conditions, random scenario option for variability
+
+### Advanced Multi-Layer Heat Map
+- **Functionality**: Four-layer heat map visualization showing traffic density, speed distribution, collision risk zones, and efficiency patterns
+- **Purpose**: Provide deep spatial intelligence about warehouse operations through visual analytics
+- **Trigger**: Continuous data collection during simulation, viewable in Analytics tab
+- **Progression**: Robots move → Data aggregated by grid cell → Heat intensity calculated → Color-coded visualization rendered → Statistics displayed → Layer-specific insights provided
+- **Success criteria**: Clear visual differentiation between layers, accurate data representation, smooth rendering, actionable insights per layer
 - **Functionality**: LLM-driven task prioritization, optimization suggestions, and adaptive learning system that adjusts robot speeds based on real-time congestion analysis
 - **Purpose**: Demonstrate AI integration in robotics control systems and autonomous optimization capabilities
 - **Trigger**: System requests optimization, user asks for insights, or congestion patterns trigger adaptive adjustments
