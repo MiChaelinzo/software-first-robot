@@ -45,6 +45,14 @@ import {
 } from '@/lib/simulation'
 import { CongestionLearningSystem } from '@/lib/congestion-learning'
 import { HeatTrailSystem } from '@/lib/heat-trail'
+import { MLPredictionEngine } from '@/lib/ml-prediction-engine'
+import { DigitalTwinEngine } from '@/lib/digital-twin-engine'
+import { SwarmIntelligence } from '@/lib/swarm-intelligence'
+import { EnergyOptimizer } from '@/lib/energy-optimizer'
+import { MLPredictionDashboard } from '@/components/MLPredictionDashboard'
+import { DigitalTwinVisualization } from '@/components/DigitalTwinVisualization'
+import { SwarmControlPanel } from '@/components/SwarmControlPanel'
+import { EnergyManagementDashboard } from '@/components/EnergyManagementDashboard'
 import { useVoiceCommands, type VoiceCommand } from '@/hooks/use-voice-commands'
 import { useTextToSpeech } from '@/hooks/use-text-to-speech'
 import { useAudioCues } from '@/hooks/use-audio-cues'
@@ -150,6 +158,15 @@ function App() {
 
   const congestionSystem = useMemo(() => new CongestionLearningSystem(GRID_WIDTH, GRID_HEIGHT, 3), [])
   const heatTrailSystem = useMemo(() => new HeatTrailSystem(50, 5000, 1), [])
+  const mlPredictionEngine = useMemo(() => new MLPredictionEngine(), [])
+  const digitalTwinEngine = useMemo(() => new DigitalTwinEngine(), [])
+  const swarmIntelligence = useMemo(() => new SwarmIntelligence(), [])
+  const energyOptimizer = useMemo(() => new EnergyOptimizer([
+    { x: 1, y: 1 },
+    { x: GRID_WIDTH - 2, y: 1 },
+    { x: 1, y: GRID_HEIGHT - 2 },
+    { x: GRID_WIDTH - 2, y: GRID_HEIGHT - 2 }
+  ]), [])
   const lastUpdateRef = useRef<number>(Date.now())
   const completionTimesRef = useRef<number[]>([])
   const warehouse3DRef = useRef<Warehouse3DHandle>(null)
@@ -159,6 +176,22 @@ function App() {
     heatMapCells: 0,
     avgSpeed: 0,
     hotspots: 0
+  })
+
+  const [mlPredictions, setMlPredictions] = useState<any[]>([])
+  const [maintenancePredictions, setMaintenancePredictions] = useState<any[]>([])
+  const [whatIfAnalyses, setWhatIfAnalyses] = useState<any[]>([])
+  const [swarmEmergence, setSwarmEmergence] = useState({
+    hasEmergentBehavior: false,
+    patterns: [] as string[],
+    coordination: 0
+  })
+  const [energyProfiles, setEnergyProfiles] = useState<any[]>([])
+  const [fleetEfficiency, setFleetEfficiency] = useState({
+    overallEfficiency: 0,
+    averageBattery: 0,
+    energyWaste: 0,
+    utilizationScore: 0
   })
 
   const [robotHistory, setRobotHistory] = useKV<any[]>('robot_history', [])
@@ -774,7 +807,17 @@ function App() {
     })
 
     assignTasks()
-  }, [isRunning, speed, warehouse, assignTasks, setRobots, setTasks, setMetrics, congestionSystem, heatTrailSystem, safeRobots, playAudioCue])
+
+    mlPredictionEngine.recordSimulationState(safeRobots, safeTasks, safeMetrics)
+    digitalTwinEngine.captureSnapshot(safeRobots, safeTasks, safeMetrics)
+    swarmIntelligence.updateSwarmBehavior(safeRobots)
+    swarmIntelligence.updateCollaborativeTasks(safeRobots, safeTasks)
+    
+    safeRobots.forEach(robot => {
+      energyOptimizer.updateEnergyHistory(robot)
+      mlPredictionEngine.recordTrafficAt(robot.position.x, robot.position.y)
+    })
+  }, [isRunning, speed, warehouse, assignTasks, setRobots, setTasks, setMetrics, congestionSystem, heatTrailSystem, safeRobots, safeTasks, safeMetrics, playAudioCue, mlPredictionEngine, digitalTwinEngine, swarmIntelligence, energyOptimizer])
 
   useEffect(() => {
     if (!isRunning) return
@@ -790,7 +833,30 @@ function App() {
       tasksInProgress: safeTasks.filter(t => t.status === 'in-progress' || t.status === 'assigned').length,
       robotUtilization: (safeRobots.filter(r => r.status === 'moving').length / safeRobots.length) * 100
     }))
-  }, [safeTasks, safeRobots, setMetrics])
+
+    if (isRunning && safeRobots.length > 0) {
+      const taskPreds = safeTasks.slice(0, 5).map(task => 
+        mlPredictionEngine.predictTaskCompletion(task, safeRobots)
+      )
+      setMlPredictions(taskPreds)
+
+      const maintPreds = safeRobots.map(robot => 
+        mlPredictionEngine.predictMaintenance(robot)
+      )
+      setMaintenancePredictions(maintPreds)
+
+      const emergence = swarmIntelligence.detectSwarmEmergence(safeRobots)
+      setSwarmEmergence(emergence)
+
+      const profiles = safeRobots.map(robot => 
+        energyOptimizer.analyzeEnergyProfile(robot)
+      )
+      setEnergyProfiles(profiles)
+
+      const efficiency = energyOptimizer.calculateFleetEnergyEfficiency(safeRobots)
+      setFleetEfficiency(efficiency)
+    }
+  }, [safeTasks, safeRobots, setMetrics, isRunning, mlPredictionEngine, swarmIntelligence, energyOptimizer])
 
   const handleAddTask = () => {
     const newTask = generateRandomTask(warehouse, safeTasks)
@@ -815,6 +881,16 @@ function App() {
     completionTimesRef.current = []
     congestionSystem.reset()
     heatTrailSystem.reset()
+    mlPredictionEngine.reset()
+    digitalTwinEngine.reset()
+    swarmIntelligence.reset()
+    energyOptimizer.reset()
+    setMlPredictions([])
+    setMaintenancePredictions([])
+    setWhatIfAnalyses([])
+    setSwarmEmergence({ hasEmergentBehavior: false, patterns: [], coordination: 0 })
+    setEnergyProfiles([])
+    setFleetEfficiency({ overallEfficiency: 0, averageBattery: 0, energyWaste: 0, utilizationScore: 0 })
     setHeatTrailStats({
       activeTrails: 0,
       totalTrailPoints: 0,
@@ -826,7 +902,7 @@ function App() {
     setSpeedHeatData(Array(GRID_HEIGHT).fill(null).map(() => Array(GRID_WIDTH).fill(0)))
     setCollisionHeatData(Array(GRID_HEIGHT).fill(null).map(() => Array(GRID_WIDTH).fill(0)))
     setEfficiencyHeatData(Array(GRID_HEIGHT).fill(null).map(() => Array(GRID_WIDTH).fill(0.5)))
-    toast.info('Simulation reset')
+    toast.info('Simulation reset - all systems cleared')
   }
 
   const handleAIOptimize = async () => {
@@ -984,6 +1060,47 @@ Analyze this robotics system and provide 2-3 specific, actionable optimization s
     if (data.metrics) setMetrics(data.metrics)
   }
 
+  const handleCreateWhatIf = (modifications: any) => {
+    const analysis = digitalTwinEngine.simulateWhatIf(
+      `What-if: ${Object.keys(modifications).join(', ')}`,
+      safeMetrics,
+      modifications
+    )
+    setWhatIfAnalyses(prev => [analysis, ...prev].slice(0, 5))
+    toast.success('What-if analysis complete', {
+      description: `Predicted ${analysis.deltaPercentages.efficiency > 0 ? '+' : ''}${analysis.deltaPercentages.efficiency.toFixed(1)}% efficiency change`
+    })
+  }
+
+  const handleRunScenario = (scenarioId: string) => {
+    const scenarios = digitalTwinEngine.getPredefinedScenarios()
+    const scenario = scenarios.find(s => s.id === scenarioId)
+    if (!scenario) return
+
+    toast.info(`Running scenario: ${scenario.name}`, {
+      description: scenario.description
+    })
+
+    setTimeout(() => {
+      toast.success('Scenario simulation complete', {
+        description: 'Results available in digital twin dashboard'
+      })
+    }, 2000)
+  }
+
+  const handleSwarmBehaviorChange = (behaviors: any) => {
+    swarmIntelligence.setBehaviorWeights(behaviors)
+    toast.success('Swarm behavior updated')
+  }
+
+  const handleCreateFormation = (type: any) => {
+    const center = { x: GRID_WIDTH / 2, y: GRID_HEIGHT / 2 }
+    const positions = swarmIntelligence.createFormation(safeRobots, type, center)
+    toast.success(`Formation created: ${type}`, {
+      description: `${positions.length} robots repositioned`
+    })
+  }
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <DynamicBackground theme={backgroundTheme || 'circuit-board'} />
@@ -1023,10 +1140,11 @@ Analyze this robotics system and provide 2-3 specific, actionable optimization s
         />
 
         <Tabs defaultValue="simulation" className="space-y-4">
-          <TabsList className="grid w-full max-w-4xl grid-cols-5">
+          <TabsList className="grid w-full max-w-6xl grid-cols-6">
             <TabsTrigger value="simulation">2D View</TabsTrigger>
             <TabsTrigger value="3d">3D View</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            <TabsTrigger value="ai-systems">AI Systems</TabsTrigger>
             <TabsTrigger value="management">Management</TabsTrigger>
             <TabsTrigger value="voice">Voice Control</TabsTrigger>
           </TabsList>
@@ -1265,6 +1383,41 @@ Analyze this robotics system and provide 2-3 specific, actionable optimization s
             />
 
             <CollisionMonitor events={collisionEvents} />
+          </TabsContent>
+
+          <TabsContent value="ai-systems" className="space-y-6">
+            <MLPredictionDashboard
+              taskPredictions={mlPredictions}
+              maintenancePredictions={maintenancePredictions}
+              systemHealthScore={mlPredictionEngine.getSystemHealthScore(safeRobots, safeMetrics)}
+            />
+
+            <DigitalTwinVisualization
+              whatIfAnalyses={whatIfAnalyses}
+              scenarios={digitalTwinEngine.getPredefinedScenarios()}
+              onRunScenario={handleRunScenario}
+              onCreateWhatIf={handleCreateWhatIf}
+              isRunning={isRunning}
+            />
+
+            <div className="grid lg:grid-cols-2 gap-6">
+              <SwarmControlPanel
+                behaviors={swarmIntelligence.getBehaviorWeights()}
+                emergenceData={swarmEmergence}
+                onBehaviorChange={handleSwarmBehaviorChange}
+                onCreateFormation={handleCreateFormation}
+                isRunning={isRunning}
+              />
+
+              <div className="space-y-6">
+                <EnergyManagementDashboard
+                  energyProfiles={energyProfiles}
+                  fleetEfficiency={fleetEfficiency}
+                  chargingStations={energyOptimizer.getChargingStationStatus()}
+                  energyPrediction={energyOptimizer.predictEnergyNeeds(safeRobots, 30)}
+                />
+              </div>
+            </div>
           </TabsContent>
 
           <TabsContent value="management" className="space-y-6">

@@ -1,6 +1,8 @@
-# Planning Guide
+# Planning Guide - v2.0 Enterprise Edition
 
-An autonomous warehouse robot simulation platform that demonstrates intelligent pathfinding, task prioritization, adaptive decision-making, and comprehensive fleet management in a dynamic fulfillment center environment. Now featuring advanced analytics, predictive insights, real-time optimization, and multi-layer heat mapping for unprecedented operational intelligence.
+> **🚀 MAJOR UPDATE**: This system has been upgraded with 4 enterprise AI systems: ML Prediction Engine, Digital Twin Simulator, Swarm Intelligence, and Energy Optimization. See [AI_SYSTEMS_README.md](./AI_SYSTEMS_README.md) for details.
+
+An autonomous warehouse robot simulation platform that demonstrates intelligent pathfinding, task prioritization, adaptive decision-making, and comprehensive fleet management in a dynamic fulfillment center environment. Now featuring **machine learning predictions, digital twin testing, swarm coordination, energy optimization**, advanced analytics, predictive insights, real-time optimization, and multi-layer heat mapping for unprecedented operational intelligence.
 
 **Experience Qualities**:
 1. **Intelligent** - The system feels smart and autonomous with robots making real-time decisions, AI-powered optimizations, and predictive analytics forecasting performance trends
