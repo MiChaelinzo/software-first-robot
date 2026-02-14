@@ -11,6 +11,8 @@ import { CongestionHeatmap } from '@/components/CongestionHeatmap'
 import { AdaptiveLearningPanel } from '@/components/AdaptiveLearningPanel'
 import { VisualizationControls } from '@/components/VisualizationControls'
 import { HeatTrailStats } from '@/components/HeatTrailStats'
+import { Warehouse3D } from '@/components/Warehouse3D'
+import { View3DControls } from '@/components/View3DControls'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card } from '@/components/ui/card'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -90,6 +92,8 @@ function App() {
   const [showSpeedIndicators, setShowSpeedIndicators] = useState(true)
   const [showHeatTrails, setShowHeatTrails] = useState(true)
   const [showHeatMap, setShowHeatMap] = useState(false)
+  const [show3DPaths, setShow3DPaths] = useState(true)
+  const [show3DGrid, setShow3DGrid] = useState(true)
 
   const congestionSystem = useMemo(() => new CongestionLearningSystem(GRID_WIDTH, GRID_HEIGHT, 3), [])
   const heatTrailSystem = useMemo(() => new HeatTrailSystem(50, 5000, 1), [])
@@ -394,8 +398,9 @@ Analyze this robotics system and provide 2-3 specific, actionable optimization s
         />
 
         <Tabs defaultValue="simulation" className="space-y-4">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
-            <TabsTrigger value="simulation">Simulation</TabsTrigger>
+          <TabsList className="grid w-full max-w-2xl grid-cols-3">
+            <TabsTrigger value="simulation">2D View</TabsTrigger>
+            <TabsTrigger value="3d">3D View</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
           </TabsList>
 
@@ -435,6 +440,55 @@ Analyze this robotics system and provide 2-3 specific, actionable optimization s
                       />
                     </div>
                   </ScrollArea>
+                </Card>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                    <AndroidLogo size={20} weight="duotone" />
+                    Robot Fleet
+                  </h3>
+                  <ScrollArea className="h-[280px]">
+                    <div className="space-y-3 pr-4">
+                      {safeRobots.map(robot => (
+                        <RobotStatusCard key={robot.id} robot={robot} />
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-semibold mb-3">Task Queue</h3>
+                  <ScrollArea className="h-[280px]">
+                    <div className="pr-4">
+                      <TaskQueue tasks={safeTasks} onDeleteTask={handleDeleteTask} />
+                    </div>
+                  </ScrollArea>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="3d" className="space-y-6">
+            <div className="grid lg:grid-cols-[1fr,320px] gap-6">
+              <div className="space-y-4">
+                <View3DControls
+                  showPaths={show3DPaths}
+                  showGrid={show3DGrid}
+                  onTogglePaths={setShow3DPaths}
+                  onToggleGrid={setShow3DGrid}
+                />
+                
+                <Card className="glass-panel p-6">
+                  <Warehouse3D
+                    warehouse={warehouse}
+                    robots={safeRobots}
+                    tasks={safeTasks}
+                    isRunning={isRunning}
+                    showPaths={show3DPaths}
+                    showGrid={show3DGrid}
+                  />
                 </Card>
               </div>
 

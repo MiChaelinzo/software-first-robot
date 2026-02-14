@@ -75,6 +75,13 @@ This is a sophisticated robotics simulation requiring real-time pathfinding algo
 - **Progression**: Robot moves → Position recorded with speed and timestamp → Trail point added to history → Heat map cell updated → Decay applied over time → Visual overlay rendered with speed colors → Statistics calculated
 - **Success criteria**: Smooth trail rendering with accurate speed colors, heat map shows traffic patterns clearly, trails fade naturally over time, performance remains optimal with multiple trails active
 
+### 3D Warehouse Visualization
+- **Functionality**: Immersive Three.js-powered 3D perspective view of the warehouse environment with real-time robot animation, path visualization, and dynamic lighting
+- **Purpose**: Provide a compelling, realistic view of warehouse operations that showcases spatial awareness, depth perception, and professional presentation quality
+- **Trigger**: User switches to 3D View tab
+- **Progression**: Scene initializes → Camera orbits warehouse → Robots animate in 3D space → Paths render as glowing trails → Tasks float and rotate → Lighting responds to robot movement → Camera follows action
+- **Success criteria**: Smooth 60fps rendering, robots move fluidly in 3D space, paths are clearly visible, warehouse elements have realistic depth and shadows, camera provides cinematic perspective
+
 ## Edge Case Handling
 - **Robot Collision**: Robots detect proximity and pause/reroute to avoid collisions; congestion system learns from near-misses and adjusts speeds in high-traffic zones
 - **Unreachable Destination**: Task reassigned or marked as blocked if path cannot be found after multiple attempts
@@ -88,6 +95,9 @@ This is a sophisticated robotics simulation requiring real-time pathfinding algo
 - **Trail Memory Overflow**: Heat trail system automatically cleans up old trail points and heat map cells to maintain performance
 - **Multiple Active Trails**: System efficiently handles 10+ simultaneous robot trails with smooth rendering and minimal performance impact
 - **Heat Map Saturation**: Heat map normalizes intensity values to prevent oversaturation in heavily-trafficked zones
+- **3D Rendering Performance**: WebGL renderer automatically adjusts quality based on device capability; fallback to 2D view if Three.js fails to initialize
+- **3D Camera Reset**: User can manually reset camera position if auto-orbit becomes disorienting
+- **Multiple Simultaneous Views**: System optimizes rendering when both 2D and 3D views exist but only renders active tab
 
 ## Design Direction
 The design should evoke a sense of advanced technology and precision engineering - like stepping into a mission control center for an automated warehouse. It should feel professional, data-rich, and futuristic while maintaining clarity and usability. The interface should communicate intelligent automation, real-time monitoring, and cutting-edge robotics technology.
@@ -130,19 +140,26 @@ Animations should emphasize the mechanical precision and fluid intelligence of a
 - Trail decay: Gradual opacity reduction over 5 seconds creating natural fade-out effect
 - Heat map cells: Emerge with 500ms fade-in and scale animation, blend mode creates layered depth
 - Speed color transitions: Instant color changes based on robot speed for immediate visual feedback
+- 3D robot movement: Smooth interpolated position updates with gentle floating animation (0.05 units at 5ms intervals)
+- 3D camera orbit: Slow rotation around warehouse center at 0.001 radians per frame when simulation running
+- 3D robot rotation: Continuous spin on moving robots at 0.05 radians per frame for dynamic feel
+- 3D task indicators: Hover animation with 0.1 unit vertical oscillation at 3ms intervals
+- 3D lighting: Point lights pulse with robot status changes, emissive intensity varies 0.2-0.5
+- 3D path lines: Fade in/out over 300ms when paths change, glowing effect matches robot color
 
 ## Component Selection
 - **Components**: 
   - Card for robot status panels and metrics dashboards with glassmorphism effect
   - Badge for robot states (idle/moving/charging) and task priorities
   - Button for simulation controls with primary/secondary variants
-  - Tabs for switching between simulation view and analytics
+  - Tabs for switching between 2D simulation view, 3D immersive view, and analytics
   - Dialog for task creation and environment configuration
   - Slider for simulation speed control
   - Progress for robot battery levels and task completion
   - Table for task queue display with sortable columns
   - Tooltip for detailed robot information on hover
   - Alert for system warnings and optimization suggestions
+  - Switch for 3D view controls (paths, grid, lighting)
 
 - **Customizations**: 
   - Custom robot visualizations using SVG with directional indicators
@@ -150,6 +167,8 @@ Animations should emphasize the mechanical precision and fluid intelligence of a
   - Custom path visualization with animated bezier curves
   - Custom performance charts using recharts with streaming data
   - Glassmorphic panels with backdrop-filter blur and subtle borders
+  - Three.js 3D scene with custom robot models, warehouse geometry, and dynamic lighting
+  - WebGL-powered real-time rendering with shadows, fog, and post-processing effects
 
 - **States**: 
   - Buttons: Default (subtle glow), hover (brighter glow + lift), active (pressed inset), disabled (50% opacity)
@@ -171,6 +190,8 @@ Animations should emphasize the mechanical precision and fluid intelligence of a
   - Fire for heat map overlay toggle
   - Gauge for speed indicators
   - MapPin for trail point markers
+  - Cube for 3D view mode
+  - GridFour for 3D grid toggle
 
 - **Spacing**: 
   - Panel padding: p-6 for main containers, p-4 for nested cards
@@ -188,3 +209,6 @@ Animations should emphasize the mechanical precision and fluid intelligence of a
   - Single column layout for all sections
   - Hamburger menu for secondary navigation
   - Touch-friendly 48px minimum touch targets
+  - 3D view defaults to disabled on mobile for performance, with opt-in toggle
+  - Reduced polygon count and simpler materials in mobile 3D view
+  - Tab bar becomes horizontally scrollable on narrow screens

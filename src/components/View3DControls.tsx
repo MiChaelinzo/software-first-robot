@@ -1,0 +1,57 @@
+import { Card } from '@/components/ui/card'
+import { Label } from '@/components/ui/label'
+import { Switch } from '@/components/ui/switch'
+import { Cube, Path, GridFour } from '@phosphor-icons/react'
+
+interface View3DControlsProps {
+  showPaths: boolean
+  showGrid: boolean
+  onTogglePaths: (value: boolean) => void
+  onToggleGrid: (value: boolean) => void
+}
+
+export function View3DControls({
+  showPaths,
+  showGrid,
+  onTogglePaths,
+  onToggleGrid
+}: View3DControlsProps) {
+  return (
+    <Card className="glass-panel p-4">
+      <div className="flex items-center gap-2 mb-3">
+        <Cube size={20} weight="duotone" className="text-primary" />
+        <h3 className="font-semibold">3D View Controls</h3>
+      </div>
+      
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Path size={16} weight="duotone" className="text-muted-foreground" />
+            <Label htmlFor="show-paths" className="text-sm cursor-pointer">
+              Robot Paths
+            </Label>
+          </div>
+          <Switch
+            id="show-paths"
+            checked={showPaths}
+            onCheckedChange={onTogglePaths}
+          />
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <GridFour size={16} weight="duotone" className="text-muted-foreground" />
+            <Label htmlFor="show-grid" className="text-sm cursor-pointer">
+              Grid Lines
+            </Label>
+          </div>
+          <Switch
+            id="show-grid"
+            checked={showGrid}
+            onCheckedChange={onToggleGrid}
+          />
+        </div>
+      </div>
+    </Card>
+  )
+}
