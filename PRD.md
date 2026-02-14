@@ -95,6 +95,15 @@ This is a sophisticated robotics simulation requiring real-time pathfinding algo
 - **Trigger**: Continuous data collection during simulation, viewable in Analytics tab
 - **Progression**: Robots move → Data aggregated by grid cell → Heat intensity calculated → Color-coded visualization rendered → Statistics displayed → Layer-specific insights provided
 - **Success criteria**: Clear visual differentiation between layers, accurate data representation, smooth rendering, actionable insights per layer
+
+### Real-Time Voice Command Control
+- **Functionality**: Natural language voice recognition system allowing hands-free control of simulation, robots, tasks, and views using spoken commands
+- **Purpose**: Demonstrate cutting-edge voice UI integration for industrial robotics applications, enabling operators to control systems while performing other tasks
+- **Trigger**: User activates microphone and speaks natural language commands
+- **Progression**: User clicks "Start" → Microphone activates → User speaks command → Speech recognized → Pattern matched → Action executed → Confirmation displayed → Command logged
+- **Success criteria**: High accuracy command recognition, natural language processing, comprehensive command library (30+ commands), real-time feedback, visual listening indicators, command history tracking
+
+### AI-Powered System Intelligence
 - **Functionality**: LLM-driven task prioritization, optimization suggestions, and adaptive learning system that adjusts robot speeds based on real-time congestion analysis
 - **Purpose**: Demonstrate AI integration in robotics control systems and autonomous optimization capabilities
 - **Trigger**: System requests optimization, user asks for insights, or congestion patterns trigger adaptive adjustments
@@ -186,13 +195,16 @@ Animations should emphasize the mechanical precision and fluid intelligence of a
 - 3D task indicators: Hover animation with 0.1 unit vertical oscillation at 3ms intervals
 - 3D lighting: Point lights pulse with robot status changes, emissive intensity varies 0.2-0.5
 - 3D path lines: Fade in/out over 300ms when paths change, glowing effect matches robot color
+- Voice indicator: Pulsing microphone icon with scale animation (1-1.2x over 1.5s), listening bars animate with staggered delays
+- Voice command feedback: Toast notifications slide in from right with 200ms duration, accent color for command confirmations
+- Transcript display: Fade in from top with -10px y offset over 200ms, interim text shown in italic with reduced opacity
 
 ## Component Selection
 - **Components**: 
   - Card for robot status panels and metrics dashboards with glassmorphism effect
   - Badge for robot states (idle/moving/charging) and task priorities
   - Button for simulation controls with primary/secondary variants
-  - Tabs for switching between 2D simulation view, 3D immersive view, and analytics
+  - Tabs for switching between 2D simulation view, 3D immersive view, analytics, management, and voice control
   - Dialog for task creation and environment configuration
   - Slider for simulation speed control
   - Progress for robot battery levels and task completion
@@ -200,6 +212,7 @@ Animations should emphasize the mechanical precision and fluid intelligence of a
   - Tooltip for detailed robot information on hover
   - Alert for system warnings and optimization suggestions
   - Switch for 3D view controls (paths, grid, lighting)
+  - ScrollArea for voice command lists and recent command history
 
 - **Customizations**: 
   - Custom robot visualizations using SVG with directional indicators
@@ -209,6 +222,8 @@ Animations should emphasize the mechanical precision and fluid intelligence of a
   - Glassmorphic panels with backdrop-filter blur and subtle borders
   - Three.js 3D scene with custom robot models, warehouse geometry, and dynamic lighting
   - WebGL-powered real-time rendering with shadows, fog, and post-processing effects
+  - Custom voice indicator with animated microphone and sound wave bars
+  - Real-time transcript display with interim results shown in muted style
 
 - **States**: 
   - Buttons: Default (subtle glow), hover (brighter glow + lift), active (pressed inset), disabled (50% opacity)

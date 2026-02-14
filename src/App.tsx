@@ -22,6 +22,8 @@ import { AdvancedHeatMap } from '@/components/AdvancedHeatMap'
 import { PerformanceGraph } from '@/components/PerformanceGraph'
 import { SystemDashboard } from '@/components/SystemDashboard'
 import { DataExport } from '@/components/DataExport'
+import { VoiceCommandPanel } from '@/components/VoiceCommandPanel'
+import { VoiceIndicator } from '@/components/VoiceIndicator'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card } from '@/components/ui/card'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -36,6 +38,7 @@ import {
 } from '@/lib/simulation'
 import { CongestionLearningSystem } from '@/lib/congestion-learning'
 import { HeatTrailSystem } from '@/lib/heat-trail'
+import { useVoiceCommands, type VoiceCommand } from '@/hooks/use-voice-commands'
 import { AndroidLogo } from '@phosphor-icons/react'
 
 const GRID_WIDTH = 18
@@ -103,6 +106,8 @@ function App() {
   const [showHeatMap, setShowHeatMap] = useState(false)
   const [show3DPaths, setShow3DPaths] = useState(true)
   const [show3DGrid, setShow3DGrid] = useState(true)
+  
+  const [recentVoiceCommands, setRecentVoiceCommands] = useState<Array<{ command: string; transcript: string; timestamp: number }>>([])
 
   const congestionSystem = useMemo(() => new CongestionLearningSystem(GRID_WIDTH, GRID_HEIGHT, 3), [])
   const heatTrailSystem = useMemo(() => new HeatTrailSystem(50, 5000, 1), [])
@@ -127,6 +132,233 @@ function App() {
   const safeTasks = tasks || []
   const safeMetrics = metrics || initialMetrics
   const safeHistory = robotHistory || []
+
+  const voiceCommands: VoiceCommand[] = useMemo(() => [
+    {
+      command: 'start simulation',
+      action: () => {
+        setIsRunning(true)
+        toast.success('Voice command: Simulation started')
+      },
+      patterns: [/start simulation/i, /start the simulation/i, /begin simulation/i, /play/i],
+      description: 'Start the warehouse simulation',
+      category: 'simulation'
+    },
+    {
+      command: 'stop simulation',
+      action: () => {
+        setIsRunning(false)
+        toast.success('Voice command: Simulation paused')
+      },
+      patterns: [/stop simulation/i, /stop the simulation/i, /pause simulation/i, /pause/i],
+      description: 'Pause the warehouse simulation',
+      category: 'simulation'
+    },
+    {
+      command: 'reset simulation',
+      action: () => {
+        handleStop()
+        toast.success('Voice command: Simulation reset')
+      },
+      patterns: [/reset simulation/i, /reset the simulation/i, /restart simulation/i, /clear all/i],
+      description: 'Reset the simulation to initial state',
+      category: 'simulation'
+    },
+    {
+      command: 'add task',
+      action: () => {
+        handleAddTask()
+      },
+      patterns: [/add task/i, /add a task/i, /create task/i, /new task/i, /add new task/i],
+      description: 'Add a new task to the queue',
+      category: 'task'
+    },
+    {
+      command: 'add five tasks',
+      action: () => {
+        for (let i = 0; i < 5; i++) {
+          handleAddTask()
+        }
+        toast.success('Voice command: Added 5 tasks')
+      },
+      patterns: [/add five tasks/i, /add 5 tasks/i, /create five tasks/i, /create 5 tasks/i],
+      description: 'Add 5 tasks at once',
+      category: 'task'
+    },
+    {
+      command: 'increase speed',
+      action: () => {
+        setSpeed(prev => {
+          const newSpeed = Math.min(prev + 0.5, 5)
+          toast.success(`Voice command: Speed increased to ${newSpeed}x`)
+          return newSpeed
+        })
+      },
+      patterns: [/increase speed/i, /speed up/i, /faster/i, /go faster/i],
+      description: 'Increase simulation speed',
+      category: 'simulation'
+    },
+    {
+      command: 'decrease speed',
+      action: () => {
+        setSpeed(prev => {
+          const newSpeed = Math.max(prev - 0.5, 0.5)
+          toast.success(`Voice command: Speed decreased to ${newSpeed}x`)
+          return newSpeed
+        })
+      },
+      patterns: [/decrease speed/i, /slow down/i, /slower/i, /go slower/i],
+      description: 'Decrease simulation speed',
+      category: 'simulation'
+    },
+    {
+      command: 'normal speed',
+      action: () => {
+        setSpeed(1)
+        toast.success('Voice command: Speed set to 1x')
+      },
+      patterns: [/normal speed/i, /default speed/i, /regular speed/i, /reset speed/i],
+      description: 'Set speed to 1x',
+      category: 'simulation'
+    },
+    {
+      command: 'show three d view',
+      action: () => {
+        const tabsList = document.querySelector('[role="tablist"]')
+        const threeDTab = Array.from(tabsList?.querySelectorAll('[role="tab"]') || [])
+          .find(tab => tab.textContent?.includes('3D View'))
+        if (threeDTab instanceof HTMLElement) {
+          threeDTab.click()
+          toast.success('Voice command: Switched to 3D view')
+        }
+      },
+      patterns: [/show three d view/i, /show 3d view/i, /three d view/i, /switch to three d/i, /switch to 3d/i],
+      description: 'Switch to 3D warehouse view',
+      category: 'view'
+    },
+    {
+      command: 'show two d view',
+      action: () => {
+        const tabsList = document.querySelector('[role="tablist"]')
+        const twoDTab = Array.from(tabsList?.querySelectorAll('[role="tab"]') || [])
+          .find(tab => tab.textContent?.includes('2D View'))
+        if (twoDTab instanceof HTMLElement) {
+          twoDTab.click()
+          toast.success('Voice command: Switched to 2D view')
+        }
+      },
+      patterns: [/show two d view/i, /show 2d view/i, /two d view/i, /switch to two d/i, /switch to 2d/i],
+      description: 'Switch to 2D warehouse view',
+      category: 'view'
+    },
+    {
+      command: 'show analytics',
+      action: () => {
+        const tabsList = document.querySelector('[role="tablist"]')
+        const analyticsTab = Array.from(tabsList?.querySelectorAll('[role="tab"]') || [])
+          .find(tab => tab.textContent?.includes('Analytics'))
+        if (analyticsTab instanceof HTMLElement) {
+          analyticsTab.click()
+          toast.success('Voice command: Switched to analytics')
+        }
+      },
+      patterns: [/show analytics/i, /view analytics/i, /analytics view/i, /show statistics/i, /show stats/i],
+      description: 'Switch to analytics view',
+      category: 'view'
+    },
+    {
+      command: 'optimize system',
+      action: () => {
+        if (!isOptimizing) {
+          handleAIOptimize()
+        }
+      },
+      patterns: [/optimize system/i, /optimize/i, /run optimization/i, /a i optimize/i, /ai optimize/i],
+      description: 'Run AI optimization analysis',
+      category: 'simulation'
+    },
+    {
+      command: 'toggle heat trails',
+      action: () => {
+        setShowHeatTrails(prev => {
+          toast.success(`Voice command: Heat trails ${!prev ? 'enabled' : 'disabled'}`)
+          return !prev
+        })
+      },
+      patterns: [/toggle heat trails/i, /show heat trails/i, /hide heat trails/i, /heat trails/i],
+      description: 'Toggle heat trail visualization',
+      category: 'view'
+    },
+    {
+      command: 'toggle congestion zones',
+      action: () => {
+        setShowCongestionZones(prev => {
+          toast.success(`Voice command: Congestion zones ${!prev ? 'enabled' : 'disabled'}`)
+          return !prev
+        })
+      },
+      patterns: [/toggle congestion/i, /show congestion/i, /hide congestion/i, /congestion zones/i],
+      description: 'Toggle congestion zone visualization',
+      category: 'view'
+    },
+    ...Array.from({ length: 10 }, (_, i) => {
+      const robotNum = i + 1
+      const robotId = `robot-${String(robotNum).padStart(2, '0')}`
+      return {
+        command: `pause robot ${robotNum}`,
+        action: () => {
+          handleRobotPause(robotId)
+          toast.success(`Voice command: Paused robot ${robotNum}`)
+        },
+        patterns: [
+          new RegExp(`pause robot ${robotNum}`, 'i'),
+          new RegExp(`pause robot number ${robotNum}`, 'i'),
+          new RegExp(`stop robot ${robotNum}`, 'i')
+        ],
+        description: `Pause robot ${robotNum}`,
+        category: 'robot' as const
+      }
+    }),
+    ...Array.from({ length: 10 }, (_, i) => {
+      const robotNum = i + 1
+      const robotId = `robot-${String(robotNum).padStart(2, '0')}`
+      return {
+        command: `resume robot ${robotNum}`,
+        action: () => {
+          handleRobotResume(robotId)
+          toast.success(`Voice command: Resumed robot ${robotNum}`)
+        },
+        patterns: [
+          new RegExp(`resume robot ${robotNum}`, 'i'),
+          new RegExp(`resume robot number ${robotNum}`, 'i'),
+          new RegExp(`start robot ${robotNum}`, 'i')
+        ],
+        description: `Resume robot ${robotNum}`,
+        category: 'robot' as const
+      }
+    })
+  ], [isOptimizing])
+
+  const {
+    isListening,
+    isSupported,
+    transcript,
+    interimTranscript,
+    toggleListening
+  } = useVoiceCommands({
+    commands: voiceCommands,
+    onCommandRecognized: (command, transcriptText) => {
+      setRecentVoiceCommands(prev => [
+        { command, transcript: transcriptText, timestamp: Date.now() },
+        ...prev
+      ].slice(0, 10))
+    },
+    onError: (error) => {
+      toast.error('Voice command error', {
+        description: error
+      })
+    }
+  })
 
   useEffect(() => {
     const initHeatData = () => {
@@ -593,6 +825,7 @@ Analyze this robotics system and provide 2-3 specific, actionable optimization s
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Toaster position="top-right" theme="dark" />
+      <VoiceIndicator isListening={isListening} interimTranscript={interimTranscript} />
       
       <div className="container mx-auto p-4 lg:p-6 space-y-6">
         <header className="flex items-center justify-between">
@@ -623,11 +856,12 @@ Analyze this robotics system and provide 2-3 specific, actionable optimization s
         />
 
         <Tabs defaultValue="simulation" className="space-y-4">
-          <TabsList className="grid w-full max-w-3xl grid-cols-4">
+          <TabsList className="grid w-full max-w-4xl grid-cols-5">
             <TabsTrigger value="simulation">2D View</TabsTrigger>
             <TabsTrigger value="3d">3D View</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="management">Management</TabsTrigger>
+            <TabsTrigger value="voice">Voice Control</TabsTrigger>
           </TabsList>
 
           <TabsContent value="simulation" className="space-y-6">
@@ -896,6 +1130,122 @@ Analyze this robotics system and provide 2-3 specific, actionable optimization s
               onRobotRecall={handleRobotRecall}
               isRunning={isRunning}
             />
+          </TabsContent>
+
+          <TabsContent value="voice" className="space-y-6">
+            <div className="grid lg:grid-cols-[1fr,400px] gap-6">
+              <div className="space-y-6">
+                <Card className="glass-panel p-6">
+                  <h3 className="text-xl font-bold mb-4">Voice Control Demo</h3>
+                  <div className="space-y-4 text-sm text-muted-foreground">
+                    <p>
+                      Control your warehouse simulation using natural voice commands. 
+                      Click "Start" in the Voice Commands panel to begin listening.
+                    </p>
+                    <div className="p-4 rounded-lg bg-accent/10 border border-accent/20">
+                      <h4 className="font-semibold text-accent mb-2">Quick Start:</h4>
+                      <ol className="space-y-2 list-decimal list-inside">
+                        <li>Click "Start" to activate voice recognition</li>
+                        <li>Speak clearly: "Start simulation"</li>
+                        <li>Try: "Add task" or "Increase speed"</li>
+                        <li>Control individual robots: "Pause robot 1"</li>
+                        <li>Switch views: "Show analytics"</li>
+                      </ol>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 mt-6">
+                      <div className="p-4 rounded-lg bg-card/50">
+                        <h4 className="font-semibold mb-2">Example Commands:</h4>
+                        <ul className="space-y-1 text-xs">
+                          <li>• "Start simulation"</li>
+                          <li>• "Add five tasks"</li>
+                          <li>• "Increase speed"</li>
+                          <li>• "Show 3D view"</li>
+                          <li>• "Toggle heat trails"</li>
+                          <li>• "Pause robot 3"</li>
+                          <li>• "Resume robot 3"</li>
+                          <li>• "Optimize system"</li>
+                        </ul>
+                      </div>
+                      <div className="p-4 rounded-lg bg-card/50">
+                        <h4 className="font-semibold mb-2">Tips for Best Results:</h4>
+                        <ul className="space-y-1 text-xs">
+                          <li>• Speak clearly and naturally</li>
+                          <li>• Minimize background noise</li>
+                          <li>• Wait for command confirmation</li>
+                          <li>• Commands are case-insensitive</li>
+                          <li>• Works in Chrome, Edge, Safari</li>
+                          <li>• Allow microphone permissions</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+
+                <div className="grid lg:grid-cols-2 gap-6">
+                  <Card className="glass-panel p-6">
+                    <h3 className="text-lg font-semibold mb-4">Current Status</h3>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center p-3 rounded-lg bg-muted/30">
+                        <span className="text-sm text-muted-foreground">Simulation</span>
+                        <span className={`font-semibold ${isRunning ? 'text-accent' : 'text-muted-foreground'}`}>
+                          {isRunning ? 'Running' : 'Stopped'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center p-3 rounded-lg bg-muted/30">
+                        <span className="text-sm text-muted-foreground">Speed</span>
+                        <span className="font-semibold font-mono">{speed}x</span>
+                      </div>
+                      <div className="flex justify-between items-center p-3 rounded-lg bg-muted/30">
+                        <span className="text-sm text-muted-foreground">Active Robots</span>
+                        <span className="font-semibold text-accent">
+                          {safeRobots.filter(r => r.status === 'moving').length}/{safeRobots.length}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center p-3 rounded-lg bg-muted/30">
+                        <span className="text-sm text-muted-foreground">Pending Tasks</span>
+                        <span className="font-semibold">{safeTasks.filter(t => t.status === 'pending').length}</span>
+                      </div>
+                    </div>
+                  </Card>
+
+                  <Card className="glass-panel p-6">
+                    <h3 className="text-lg font-semibold mb-4">Voice Recognition</h3>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center p-3 rounded-lg bg-muted/30">
+                        <span className="text-sm text-muted-foreground">Status</span>
+                        <span className={`font-semibold ${isListening ? 'text-accent' : 'text-muted-foreground'}`}>
+                          {isListening ? 'Listening' : 'Inactive'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center p-3 rounded-lg bg-muted/30">
+                        <span className="text-sm text-muted-foreground">Supported</span>
+                        <span className={`font-semibold ${isSupported ? 'text-success' : 'text-destructive'}`}>
+                          {isSupported ? 'Yes' : 'No'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center p-3 rounded-lg bg-muted/30">
+                        <span className="text-sm text-muted-foreground">Commands Executed</span>
+                        <span className="font-semibold font-mono">{recentVoiceCommands.length}</span>
+                      </div>
+                      <div className="flex justify-between items-center p-3 rounded-lg bg-muted/30">
+                        <span className="text-sm text-muted-foreground">Available Commands</span>
+                        <span className="font-semibold font-mono">{voiceCommands.length}</span>
+                      </div>
+                    </div>
+                  </Card>
+                </div>
+              </div>
+
+              <VoiceCommandPanel
+                isListening={isListening}
+                isSupported={isSupported}
+                transcript={transcript}
+                interimTranscript={interimTranscript}
+                onToggle={toggleListening}
+                commands={voiceCommands}
+                recentCommands={recentVoiceCommands}
+              />
+            </div>
           </TabsContent>
         </Tabs>
       </div>
