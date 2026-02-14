@@ -31,6 +31,10 @@ import { MouseTrail } from '@/components/MouseTrail'
 import { ParticleEffects } from '@/components/ParticleEffects'
 import { DataStreams } from '@/components/DataStreams'
 import { ScanlineEffect } from '@/components/ScanlineEffect'
+import { WarehouseNetworkMap } from '@/components/WarehouseNetworkMap'
+import { RobotTransferPanel } from '@/components/RobotTransferPanel'
+import { NetworkAnalyticsDashboard } from '@/components/NetworkAnalyticsDashboard'
+import { LoadBalancingPanel } from '@/components/LoadBalancingPanel'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card } from '@/components/ui/card'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -49,6 +53,7 @@ import { MLPredictionEngine } from '@/lib/ml-prediction-engine'
 import { DigitalTwinEngine } from '@/lib/digital-twin-engine'
 import { SwarmIntelligence } from '@/lib/swarm-intelligence'
 import { EnergyOptimizer } from '@/lib/energy-optimizer'
+import { MultiWarehouseSystem } from '@/lib/multi-warehouse-system'
 import { MLPredictionDashboard } from '@/components/MLPredictionDashboard'
 import { DigitalTwinVisualization } from '@/components/DigitalTwinVisualization'
 import { SwarmControlPanel } from '@/components/SwarmControlPanel'
@@ -104,7 +109,10 @@ const initialMetrics: PerformanceMetrics = {
   avgCongestionLevel: 0,
   highTrafficZones: 0,
   learningRate: 0.1,
-  efficiencyGain: 0
+  efficiencyGain: 0,
+  robotTransfers: 0,
+  activeTransfers: 0,
+  transferTime: 0
 }
 
 function App() {
@@ -167,6 +175,8 @@ function App() {
     { x: 1, y: GRID_HEIGHT - 2 },
     { x: GRID_WIDTH - 2, y: GRID_HEIGHT - 2 }
   ]), [])
+  const multiWarehouseSystem = useMemo(() => new MultiWarehouseSystem(), [])
+  
   const lastUpdateRef = useRef<number>(Date.now())
   const completionTimesRef = useRef<number[]>([])
   const warehouse3DRef = useRef<Warehouse3DHandle>(null)
@@ -200,6 +210,19 @@ function App() {
   const [collisionHeatData, setCollisionHeatData] = useState<number[][]>([])
   const [efficiencyHeatData, setEfficiencyHeatData] = useState<number[][]>([])
   const [particleExplosions, setParticleExplosions] = useState<Array<{ x: number; y: number; timestamp: number; color?: string }>>([])
+  
+  const [selectedWarehouse, setSelectedWarehouse] = useState<string>('warehouse-central')
+  const [loadBalanceSuggestions, setLoadBalanceSuggestions] = useState<Array<{
+    robotId: string
+    from: string
+    to: string
+    reason: string
+  }>>([])
+  
+  const warehouses = multiWarehouseSystem.getWarehouses()
+  const networkConnections = multiWarehouseSystem.getConnections()
+  const activeTransfers = multiWarehouseSystem.getActiveTransfers()
+  const transferHistory = multiWarehouseSystem.getTransferHistory()
 
   const safeRobots = robots || initialRobots
   const safeTasks = tasks || []
@@ -459,6 +482,39 @@ function App() {
       description: 'Switch to satellite view background theme',
       category: 'view'
     },
+    {
+      command: 'show network',
+      action: () => {
+        const tabsList = document.querySelector('[role="tablist"]')
+        const networkTab = Array.from(tabsList?.querySelectorAll('[role="tab"]') || [])
+          .find(tab => tab.textContent?.includes('Multi-Warehouse'))
+        if (networkTab instanceof HTMLElement) {
+          networkTab.click()
+          speak('Switched to multi-warehouse network view')
+          toast.success('Voice command: Switched to network view')
+        }
+      },
+      patterns: [/show network/i, /show multi warehouse/i, /network view/i, /warehouse network/i],
+      description: 'Switch to multi-warehouse network view',
+      category: 'view'
+    },
+    {
+      command: 'balance network',
+      action: () => {
+        const suggestions = multiWarehouseSystem.suggestRobotReallocation()
+        if (suggestions.length > 0) {
+          handleInitiateTransfer(suggestions[0].robotId, suggestions[0].to)
+          speak('Applying load balancing recommendation')
+          toast.success('Voice command: Load balancing applied')
+        } else {
+          speak('Network is already balanced')
+          toast.info('Voice command: Network is balanced')
+        }
+      },
+      patterns: [/balance network/i, /balance load/i, /optimize distribution/i, /rebalance warehouses/i],
+      description: 'Apply load balancing recommendation',
+      category: 'simulation'
+    },
     ...Array.from({ length: 10 }, (_, i) => {
       const robotNum = i + 1
       const robotId = `robot-${String(robotNum).padStart(2, '0')}`
@@ -602,6 +658,25 @@ function App() {
 
     setRobots((currentRobots = initialRobots) => {
       const updatedRobots = currentRobots.map(robot => {
+        if (robot.status === 'transferring') {
+          const transferUpdate = multiWarehouseSystem.updateTransfer(robot)
+          robot.transferProgress = transferUpdate.progress
+          
+          if (transferUpdate.completed) {
+            setMetrics((currentMetrics = initialMetrics) => ({
+              ...currentMetrics,
+              robotTransfers: currentMetrics.robotTransfers + 1,
+              activeTransfers: Math.max(0, currentMetrics.activeTransfers - 1)
+            }))
+            playAudioCue('task_completed')
+            toast.success('Robot transfer complete', {
+              description: `${robot.id} arrived at ${robot.warehouseId}`
+            })
+          }
+          
+          return robot
+        }
+        
         const adaptiveSpeed = congestionSystem.getAdaptiveSpeed(robot, currentRobots)
         robot.speed = adaptiveSpeed
 
@@ -902,6 +977,8 @@ function App() {
     setSpeedHeatData(Array(GRID_HEIGHT).fill(null).map(() => Array(GRID_WIDTH).fill(0)))
     setCollisionHeatData(Array(GRID_HEIGHT).fill(null).map(() => Array(GRID_WIDTH).fill(0)))
     setEfficiencyHeatData(Array(GRID_HEIGHT).fill(null).map(() => Array(GRID_WIDTH).fill(0.5)))
+    multiWarehouseSystem.reset()
+    setLoadBalanceSuggestions([])
     toast.info('Simulation reset - all systems cleared')
   }
 
@@ -1101,6 +1178,72 @@ Analyze this robotics system and provide 2-3 specific, actionable optimization s
     })
   }
 
+  const handleInitiateTransfer = (robotId: string, targetWarehouseId: string) => {
+    const robot = safeRobots.find(r => r.id === robotId)
+    if (!robot || robot.status === 'transferring') {
+      toast.error('Cannot initiate transfer', {
+        description: 'Robot is not available'
+      })
+      return
+    }
+
+    const transferRoute = multiWarehouseSystem.initiateTransfer(robot, targetWarehouseId)
+    if (!transferRoute) {
+      toast.error('Transfer failed', {
+        description: 'No route available or warehouses not found'
+      })
+      return
+    }
+
+    setRobots((currentRobots = initialRobots) =>
+      currentRobots.map(r =>
+        r.id === robotId
+          ? { ...r, status: 'transferring' as const, transferRoute, transferProgress: 0, path: [], targetPosition: null }
+          : r
+      )
+    )
+
+    setMetrics((currentMetrics = initialMetrics) => ({
+      ...currentMetrics,
+      activeTransfers: currentMetrics.activeTransfers + 1
+    }))
+
+    playAudioCue('simulation_start')
+    speak(`Initiating transfer of ${robotId} to ${warehouses.find(w => w.id === targetWarehouseId)?.name}`)
+    toast.success('Transfer initiated', {
+      description: `${robotId} is transferring to ${transferRoute.toWarehouse}`
+    })
+  }
+
+  const handleCancelTransfer = (robotId: string) => {
+    multiWarehouseSystem.cancelTransfer(robotId)
+    
+    setRobots((currentRobots = initialRobots) =>
+      currentRobots.map(r =>
+        r.id === robotId
+          ? { ...r, status: 'idle' as const, transferRoute: undefined, transferProgress: undefined }
+          : r
+      )
+    )
+
+    setMetrics((currentMetrics = initialMetrics) => ({
+      ...currentMetrics,
+      activeTransfers: Math.max(0, currentMetrics.activeTransfers - 1)
+    }))
+
+    toast.info('Transfer cancelled', {
+      description: `${robotId} transfer was cancelled`
+    })
+  }
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const suggestions = multiWarehouseSystem.suggestRobotReallocation()
+      setLoadBalanceSuggestions(suggestions)
+    }, 10000)
+    return () => clearInterval(interval)
+  }, [multiWarehouseSystem])
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <DynamicBackground theme={backgroundTheme || 'circuit-board'} />
@@ -1140,9 +1283,10 @@ Analyze this robotics system and provide 2-3 specific, actionable optimization s
         />
 
         <Tabs defaultValue="simulation" className="space-y-4">
-          <TabsList className="grid w-full max-w-6xl grid-cols-6">
+          <TabsList className="grid w-full max-w-7xl grid-cols-7">
             <TabsTrigger value="simulation">2D View</TabsTrigger>
             <TabsTrigger value="3d">3D View</TabsTrigger>
+            <TabsTrigger value="network">Multi-Warehouse</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="ai-systems">AI Systems</TabsTrigger>
             <TabsTrigger value="management">Management</TabsTrigger>
@@ -1264,6 +1408,43 @@ Analyze this robotics system and provide 2-3 specific, actionable optimization s
                 </div>
               </div>
             </div>
+          </TabsContent>
+
+          <TabsContent value="network" className="space-y-6">
+            <WarehouseNetworkMap
+              warehouses={warehouses}
+              connections={networkConnections}
+              robots={safeRobots}
+              activeTransfers={activeTransfers.size}
+              onWarehouseSelect={setSelectedWarehouse}
+              selectedWarehouse={selectedWarehouse}
+            />
+
+            <div className="grid lg:grid-cols-2 gap-6">
+              <RobotTransferPanel
+                robots={safeRobots}
+                warehouses={warehouses}
+                activeTransfers={activeTransfers}
+                onInitiateTransfer={handleInitiateTransfer}
+                onCancelTransfer={handleCancelTransfer}
+                isRunning={isRunning}
+              />
+
+              <LoadBalancingPanel
+                suggestions={loadBalanceSuggestions}
+                onApplySuggestion={handleInitiateTransfer}
+                warehouses={warehouses.map(w => ({ id: w.id, name: w.name, color: w.color }))}
+                isRunning={isRunning}
+              />
+            </div>
+
+            <NetworkAnalyticsDashboard
+              warehouses={warehouses}
+              robots={safeRobots}
+              tasks={safeTasks}
+              connections={networkConnections}
+              transferHistory={transferHistory}
+            />
           </TabsContent>
 
           <TabsContent value="analytics" className="space-y-6">

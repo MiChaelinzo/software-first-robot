@@ -39,7 +39,7 @@ export function createWarehouse(width: number, height: number): WarehouseCell[][
   return warehouse
 }
 
-export function createRobot(id: string, position: Position, color: string): Robot {
+export function createRobot(id: string, position: Position, color: string, warehouseId: string = 'warehouse-central'): Robot {
   return {
     id,
     position,
@@ -49,7 +49,8 @@ export function createRobot(id: string, position: Position, color: string): Robo
     battery: 100,
     currentTask: null,
     speed: 1,
-    color
+    color,
+    warehouseId
   }
 }
 
@@ -299,6 +300,7 @@ export function generateRandomTask(
     position,
     priority: priorities[Math.floor(Math.random() * priorities.length)],
     status: 'pending',
-    createdAt: Date.now()
+    createdAt: Date.now(),
+    warehouseId: 'warehouse-central'
   }
 }

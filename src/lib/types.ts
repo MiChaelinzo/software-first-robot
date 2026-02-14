@@ -8,22 +8,57 @@ export interface Robot {
   position: Position
   targetPosition: Position | null
   path: Position[]
-  status: 'idle' | 'moving' | 'charging' | 'error'
+  status: 'idle' | 'moving' | 'charging' | 'error' | 'transferring'
   battery: number
   currentTask: Task | null
   speed: number
   color: string
+  warehouseId: string
+  transferProgress?: number
+  transferRoute?: TransferRoute
 }
 
 export interface Task {
   id: string
-  type: 'pickup' | 'delivery' | 'scan' | 'recharge'
+  type: 'pickup' | 'delivery' | 'scan' | 'recharge' | 'transfer'
   position: Position
   priority: 'low' | 'medium' | 'high' | 'critical'
   status: 'pending' | 'assigned' | 'in-progress' | 'completed' | 'failed'
   assignedRobotId?: string
   createdAt: number
   completedAt?: number
+  warehouseId: string
+  transferDestination?: string
+}
+
+export interface TransferRoute {
+  fromWarehouse: string
+  toWarehouse: string
+  departureGate: Position
+  arrivalGate: Position
+  duration: number
+  startTime: number
+}
+
+export interface TransferGate {
+  id: string
+  position: Position
+  connectedWarehouseId: string
+  status: 'available' | 'busy' | 'maintenance'
+  robotQueue: string[]
+}
+
+export interface Warehouse {
+  id: string
+  name: string
+  position: { x: number; y: number }
+  grid: WarehouseCell[][]
+  width: number
+  height: number
+  transferGates: TransferGate[]
+  robots: string[]
+  color: string
+  region: string
 }
 
 export interface WarehouseCell {
@@ -49,6 +84,27 @@ export interface PerformanceMetrics {
   highTrafficZones: number
   learningRate: number
   efficiencyGain: number
+  robotTransfers: number
+  activeTransfers: number
+  transferTime: number
+}
+
+export interface WarehouseNetwork {
+  warehouses: Map<string, Warehouse>
+  connections: NetworkConnection[]
+  totalRobots: number
+  totalTasks: number
+  networkEfficiency: number
+}
+
+export interface NetworkConnection {
+  id: string
+  warehouse1: string
+  warehouse2: string
+  distance: number
+  transferTime: number
+  bandwidth: number
+  congestion: number
 }
 
 export interface SimulationState {
