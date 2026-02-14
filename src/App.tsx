@@ -25,7 +25,8 @@ import { DataExport } from '@/components/DataExport'
 import { VoiceCommandPanel } from '@/components/VoiceCommandPanel'
 import { VoiceIndicator } from '@/components/VoiceIndicator'
 import { VoiceFeedbackSettings } from '@/components/VoiceFeedbackSettings'
-import { DynamicBackground } from '@/components/DynamicBackground'
+import { DynamicBackground, type BackgroundTheme } from '@/components/DynamicBackground'
+import { BackgroundThemeControls } from '@/components/BackgroundThemeControls'
 import { MouseTrail } from '@/components/MouseTrail'
 import { ParticleEffects } from '@/components/ParticleEffects'
 import { DataStreams } from '@/components/DataStreams'
@@ -115,6 +116,8 @@ function App() {
   const [showHeatMap, setShowHeatMap] = useState(false)
   const [show3DPaths, setShow3DPaths] = useState(true)
   const [show3DGrid, setShow3DGrid] = useState(true)
+  
+  const [backgroundTheme, setBackgroundTheme] = useKV<BackgroundTheme>('background_theme', 'circuit-board')
   
   const [recentVoiceCommands, setRecentVoiceCommands] = useState<Array<{ command: string; transcript: string; timestamp: number }>>([])
   
@@ -390,6 +393,39 @@ function App() {
       description: 'Get a spoken status report',
       category: 'view'
     },
+    {
+      command: 'circuit board theme',
+      action: () => {
+        setBackgroundTheme('circuit-board')
+        speak('Switched to circuit board theme')
+        toast.success('Voice command: Circuit board background')
+      },
+      patterns: [/circuit board theme/i, /circuit board background/i, /circuit theme/i, /show circuit board/i],
+      description: 'Switch to circuit board background theme',
+      category: 'view'
+    },
+    {
+      command: 'blueprint theme',
+      action: () => {
+        setBackgroundTheme('warehouse-blueprint')
+        speak('Switched to warehouse blueprint theme')
+        toast.success('Voice command: Blueprint background')
+      },
+      patterns: [/blueprint theme/i, /blueprint background/i, /warehouse blueprint/i, /show blueprint/i],
+      description: 'Switch to warehouse blueprint background theme',
+      category: 'view'
+    },
+    {
+      command: 'satellite theme',
+      action: () => {
+        setBackgroundTheme('satellite-view')
+        speak('Switched to satellite view theme')
+        toast.success('Voice command: Satellite view background')
+      },
+      patterns: [/satellite theme/i, /satellite view/i, /satellite background/i, /show satellite/i],
+      description: 'Switch to satellite view background theme',
+      category: 'view'
+    },
     ...Array.from({ length: 10 }, (_, i) => {
       const robotNum = i + 1
       const robotId = `robot-${String(robotNum).padStart(2, '0')}`
@@ -428,7 +464,7 @@ function App() {
         category: 'robot' as const
       }
     })
-  ], [isOptimizing, speak, safeRobots, safeTasks, isRunning, setTtsEnabled, playAudioCue])
+  ], [isOptimizing, speak, safeRobots, safeTasks, isRunning, setTtsEnabled, setBackgroundTheme, playAudioCue])
 
   const {
     isListening,
@@ -950,7 +986,7 @@ Analyze this robotics system and provide 2-3 specific, actionable optimization s
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <DynamicBackground />
+      <DynamicBackground theme={backgroundTheme || 'circuit-board'} />
       <ScanlineEffect />
       <DataStreams />
       <MouseTrail />
@@ -1253,6 +1289,11 @@ Analyze this robotics system and provide 2-3 specific, actionable optimization s
               />
             </div>
 
+            <BackgroundThemeControls
+              currentTheme={backgroundTheme || 'circuit-board'}
+              onThemeChange={setBackgroundTheme}
+            />
+
             <FleetManagementPanel
               robots={safeRobots}
               onRobotSpeedAdjust={handleRobotSpeedAdjust}
@@ -1295,6 +1336,9 @@ Analyze this robotics system and provide 2-3 specific, actionable optimization s
                           <li>• "Pause robot 3"</li>
                           <li>• "Resume robot 3"</li>
                           <li>• "Optimize system"</li>
+                          <li>• "Circuit board theme"</li>
+                          <li>• "Blueprint theme"</li>
+                          <li>• "Satellite theme"</li>
                         </ul>
                       </div>
                       <div className="p-4 rounded-lg bg-card/50">
