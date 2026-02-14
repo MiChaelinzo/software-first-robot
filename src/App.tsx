@@ -41,6 +41,8 @@ import { CongestionLearningSystem } from '@/lib/congestion-learning'
 import { HeatTrailSystem } from '@/lib/heat-trail'
 import { useVoiceCommands, type VoiceCommand } from '@/hooks/use-voice-commands'
 import { useTextToSpeech } from '@/hooks/use-text-to-speech'
+import { useAudioCues } from '@/hooks/use-audio-cues'
+import { AudioSettingsPanel } from '@/components/AudioSettingsPanel'
 import { AndroidLogo } from '@phosphor-icons/react'
 
 const GRID_WIDTH = 18
@@ -131,6 +133,13 @@ function App() {
     volume: ttsVolume || 0.9
   })
 
+  const {
+    playAudioCue,
+    settings: audioSettings,
+    updateSettings: updateAudioSettings,
+    isSupported: isAudioSupported
+  } = useAudioCues()
+
   const congestionSystem = useMemo(() => new CongestionLearningSystem(GRID_WIDTH, GRID_HEIGHT, 3), [])
   const heatTrailSystem = useMemo(() => new HeatTrailSystem(50, 5000, 1), [])
   const lastUpdateRef = useRef<number>(Date.now())
@@ -160,6 +169,7 @@ function App() {
       command: 'start simulation',
       action: () => {
         setIsRunning(true)
+        playAudioCue('simulation_start')
         speak('Simulation started')
         toast.success('Voice command: Simulation started')
       },
@@ -171,6 +181,7 @@ function App() {
       command: 'stop simulation',
       action: () => {
         setIsRunning(false)
+        playAudioCue('simulation_stop')
         speak('Simulation paused')
         toast.success('Voice command: Simulation paused')
       },
@@ -304,6 +315,7 @@ function App() {
       action: () => {
         if (!isOptimizing) {
           handleAIOptimize()
+          playAudioCue('optimization_complete')
           speak('Running system optimization')
         }
       },
@@ -410,7 +422,7 @@ function App() {
         category: 'robot' as const
       }
     })
-  ], [isOptimizing, speak, safeRobots, safeTasks, isRunning, setTtsEnabled])
+  ], [isOptimizing, speak, safeRobots, safeTasks, isRunning, setTtsEnabled, playAudioCue])
 
   const {
     isListening,
@@ -568,6 +580,8 @@ function App() {
 
           collisionMetrics.events.forEach(event => {
             if (event.type === 'critical-avoidance') {
+              playAudioCue('collision_critical')
+              
               const avgPos = {
                 x: updatedRobots.find(r => r.id === event.robotIds[0])?.position.x || 0,
                 y: updatedRobots.find(r => r.id === event.robotIds[0])?.position.y || 0
@@ -594,6 +608,10 @@ function App() {
                   position: avgPos
                 }
               ].slice(-100))
+            } else if (event.type === 'near-miss') {
+              playAudioCue('collision_near_miss')
+            } else if (event.type === 'collision-avoided') {
+              playAudioCue('collision_avoided')
             }
           })
         }
@@ -620,6 +638,7 @@ function App() {
       const updatedTasks = currentTasks.map(task => {
         if (task.status === 'assigned') {
           task.status = 'in-progress'
+          playAudioCue('task_assigned')
           
           setRobotHistory((currentHistory = []) => [
             ...currentHistory,
@@ -634,6 +653,8 @@ function App() {
         }
         
         if (task.status === 'completed' && task.completedAt && !task.assignedRobotId?.includes('processed')) {
+          playAudioCue('task_completed')
+          
           const completionTime = (task.completedAt - task.createdAt) / 1000
           completionTimesRef.current.push(completionTime)
           
@@ -691,7 +712,7 @@ function App() {
     })
 
     assignTasks()
-  }, [isRunning, speed, warehouse, assignTasks, setRobots, setTasks, setMetrics, congestionSystem, heatTrailSystem, safeRobots])
+  }, [isRunning, speed, warehouse, assignTasks, setRobots, setTasks, setMetrics, congestionSystem, heatTrailSystem, safeRobots, playAudioCue])
 
   useEffect(() => {
     if (!isRunning) return
@@ -1328,6 +1349,18 @@ Analyze this robotics system and provide 2-3 specific, actionable optimization s
                   onVolumeChange={(volume) => setTtsVolume(volume)}
                   onVoiceChange={setSelectedVoice}
                   onTest={() => speak('Voice feedback is working correctly. All systems operational.')}
+                />
+
+                <AudioSettingsPanel
+                  enabled={audioSettings.enabled}
+                  volume={audioSettings.volume}
+                  isSupported={isAudioSupported}
+                  onEnabledChange={(enabled) => updateAudioSettings({ enabled })}
+                  onVolumeChange={(volume) => updateAudioSettings({ volume })}
+                  onTest={() => {
+                    playAudioCue('collision_critical')
+                    setTimeout(() => playAudioCue('task_completed'), 400)
+                  }}
                 />
               </div>
 

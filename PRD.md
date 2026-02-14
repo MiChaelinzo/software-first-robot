@@ -110,6 +110,13 @@ This is a sophisticated robotics simulation requiring real-time pathfinding algo
 - **Progression**: Command recognized → Action executed → TTS generates speech → Audio plays through speakers → Visual indicator shows speaking state → Queue manages multiple messages
 - **Success criteria**: Clear, natural-sounding voice output, instant feedback for commands, configurable voice parameters (rate, pitch, volume, voice selection), support for multiple system voices, queue management for overlapping messages, visual speaking indicator, settings persistence
 
+### Audio Cues for Critical Events
+- **Functionality**: Real-time audio feedback system using Web Audio API to generate distinct synthesized sounds for collisions, task events, robot status changes, and system actions
+- **Purpose**: Provide immediate auditory feedback for critical events, enhancing situational awareness and enabling eyes-free monitoring of warehouse operations
+- **Trigger**: Collision events (critical avoidance, near miss, successful avoidance), task assignment/completion, robot charging, system optimization, simulation state changes
+- **Progression**: Event occurs → Audio cue type determined → Web Audio oscillator synthesizes tone sequence → Sound plays at configured volume → User receives instant feedback
+- **Success criteria**: Distinct, recognizable sounds for each event type, adjustable volume control, enable/disable toggle, minimal latency (<50ms), no performance impact on simulation, persistent user preferences
+
 ### AI-Powered System Intelligence
 - **Functionality**: LLM-driven task prioritization, optimization suggestions, and adaptive learning system that adjusts robot speeds based on real-time congestion analysis
 - **Purpose**: Demonstrate AI integration in robotics control systems and autonomous optimization capabilities
@@ -145,8 +152,8 @@ This is a sophisticated robotics simulation requiring real-time pathfinding algo
 - **Simultaneous Task Assignment**: Locking mechanism ensures tasks assigned to only one robot
 - **Environment Changes**: Robots recalculate paths mid-route if obstacles appear
 - **Performance Degradation**: System alerts user if robot efficiency drops below threshold
-- **High Congestion**: Adaptive learning system reduces speeds in congested zones and learns optimal traffic patterns over time
-- **Critical Priority Tasks**: System maintains higher speeds for critical tasks even in congested areas
+- **High Congestion**: Adaptive learning system reduces speeds in congested zones and learns optimal traffic patterns over time; audio cues alert operators to critical situations
+- **Critical Priority Tasks**: System maintains higher speeds for critical tasks even in congested areas; distinct audio cues indicate priority task events
 - **Learning Rate Adjustment**: System dynamically adjusts learning rate based on success metrics and collision avoidance performance
 - **Trail Memory Overflow**: Heat trail system automatically cleans up old trail points and heat map cells to maintain performance
 - **Multiple Active Trails**: System efficiently handles 10+ simultaneous robot trails with smooth rendering and minimal performance impact
@@ -154,6 +161,9 @@ This is a sophisticated robotics simulation requiring real-time pathfinding algo
 - **3D Rendering Performance**: WebGL renderer automatically adjusts quality based on device capability; fallback to 2D view if Three.js fails to initialize
 - **3D Camera Reset**: User can manually reset camera position if auto-orbit becomes disorienting
 - **Multiple Simultaneous Views**: System optimizes rendering when both 2D and 3D views exist but only renders active tab
+- **Audio Context Limitations**: System gracefully handles browsers that don't support Web Audio API with disabled audio controls and informative messaging
+- **Overlapping Audio Cues**: Multiple simultaneous events trigger sequential audio cues to prevent audio clipping or confusion
+- **Audio Volume Management**: Independent volume controls for voice feedback (TTS) and audio cues allow user preference customization
 
 ## Design Direction
 The design should evoke a sense of advanced technology and precision engineering - like stepping into a mission control center for an automated warehouse. It should feel professional, data-rich, and futuristic while maintaining clarity and usability. The interface should communicate intelligent automation, real-time monitoring, and cutting-edge robotics technology.
@@ -208,6 +218,10 @@ Animations should emphasize the mechanical precision and fluid intelligence of a
 - Voice speaking indicator: Transform microphone to speaker icon with 200ms transition, primary color scheme when speaking vs accent when listening
 - TTS settings sliders: Smooth value changes with 150ms transition, real-time preview updates, disabled state with 50% opacity
 - Voice test button: Pulse animation on click, disabled state during speech playback
+- Audio cue playback: Instant oscillator synthesis with <50ms latency, smooth exponential fade-out for natural sound decay
+- Audio settings panel: Toggle transitions over 200ms, volume slider updates in real-time with 150ms smoothing
+- Event-triggered sounds: Immediate playback synchronized with visual events, no perceptible delay between action and audio feedback
+- Sound wave animations: Visual feedback indicators pulse in sync with audio playback for enhanced user awareness
 
 ## Component Selection
 - **Components**: 
@@ -226,6 +240,10 @@ Animations should emphasize the mechanical precision and fluid intelligence of a
   - Select for voice selection dropdown
   - Slider for TTS rate, pitch, and volume controls
   - Switch for enabling/disabling voice feedback
+  - Card for audio settings panel with glassmorphism
+  - Switch for enabling/disabling audio cues
+  - Slider for audio cue volume control
+  - Badge for audio support status indicators
 
 - **Customizations**: 
   - Custom robot visualizations using SVG with directional indicators
@@ -239,6 +257,9 @@ Animations should emphasize the mechanical precision and fluid intelligence of a
   - Real-time transcript display with interim results shown in muted style
   - Custom voice feedback settings panel with adjustable TTS parameters
   - Dual-mode voice indicator (listening/speaking) with icon morphing animation
+  - Custom audio settings panel with Web Audio API integration
+  - Real-time audio cue synthesis using oscillators and gain nodes
+  - Visual event type indicators color-coded for each audio cue category
 
 - **States**: 
   - Buttons: Default (subtle glow), hover (brighter glow + lift), active (pressed inset), disabled (50% opacity)
@@ -266,6 +287,9 @@ Animations should emphasize the mechanical precision and fluid intelligence of a
   - MicrophoneSlash for inactive voice state
   - SpeakerHigh for TTS speaking state and voice feedback settings
   - SpeakerSlash for disabled voice feedback
+  - SpeakerHigh for audio cues enabled state
+  - SpeakerSlash for audio cues disabled state
+  - WaveformCircle for audio cue visualization (if needed)
 
 - **Spacing**: 
   - Panel padding: p-6 for main containers, p-4 for nested cards
