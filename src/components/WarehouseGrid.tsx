@@ -1,19 +1,29 @@
 import { motion } from 'framer-motion'
 import type { Robot, WarehouseCell, Task } from '@/lib/types'
+import type { CongestionZone } from '@/lib/congestion-learning'
 import { Lightning, Package, Circle } from '@phosphor-icons/react'
+import { SpeedOverlay } from './SpeedOverlay'
 
 interface WarehouseGridProps {
   warehouse: WarehouseCell[][]
   robots: Robot[]
   tasks: Task[]
   cellSize?: number
+  congestionZones?: CongestionZone[]
+  showCongestionZones?: boolean
+  showRobotSpeeds?: boolean
+  showSpeedIndicators?: boolean
 }
 
 export function WarehouseGrid({ 
   warehouse, 
   robots, 
   tasks,
-  cellSize = 40 
+  cellSize = 40,
+  congestionZones = [],
+  showCongestionZones = false,
+  showRobotSpeeds = false,
+  showSpeedIndicators = false
 }: WarehouseGridProps) {
   const width = warehouse[0]?.length || 0
   const height = warehouse.length
@@ -77,6 +87,15 @@ export function WarehouseGrid({
           </div>
         ))
       ))}
+
+      <SpeedOverlay 
+        robots={robots}
+        zones={congestionZones}
+        cellSize={cellSize}
+        showZones={showCongestionZones}
+        showRobotSpeeds={showRobotSpeeds}
+        showSpeedIndicators={showSpeedIndicators}
+      />
 
       {tasks
         .filter(task => task.status === 'pending' || task.status === 'assigned')

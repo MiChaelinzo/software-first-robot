@@ -9,6 +9,7 @@ import { SimulationControls } from '@/components/SimulationControls'
 import { CollisionMonitor, type CollisionEvent } from '@/components/CollisionMonitor'
 import { CongestionHeatmap } from '@/components/CongestionHeatmap'
 import { AdaptiveLearningPanel } from '@/components/AdaptiveLearningPanel'
+import { VisualizationControls } from '@/components/VisualizationControls'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card } from '@/components/ui/card'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -81,6 +82,10 @@ function App() {
   const [metrics, setMetrics] = useKV<PerformanceMetrics>('metrics', initialMetrics)
   const [collisionEvents, setCollisionEvents] = useState<CollisionEvent[]>([])
   const [isOptimizing, setIsOptimizing] = useState(false)
+  
+  const [showCongestionZones, setShowCongestionZones] = useState(true)
+  const [showRobotSpeeds, setShowRobotSpeeds] = useState(true)
+  const [showSpeedIndicators, setShowSpeedIndicators] = useState(true)
 
   const congestionSystem = useMemo(() => new CongestionLearningSystem(GRID_WIDTH, GRID_HEIGHT, 3), [])
   const lastUpdateRef = useRef<number>(Date.now())
@@ -371,18 +376,33 @@ Analyze this robotics system and provide 2-3 specific, actionable optimization s
 
           <TabsContent value="simulation" className="space-y-6">
             <div className="grid lg:grid-cols-[1fr,320px] gap-6">
-              <Card className="glass-panel p-6">
-                <ScrollArea className="h-[600px]">
-                  <div className="flex items-center justify-center">
-                    <WarehouseGrid
-                      warehouse={warehouse}
-                      robots={safeRobots}
-                      tasks={safeTasks}
-                      cellSize={40}
-                    />
-                  </div>
-                </ScrollArea>
-              </Card>
+              <div className="space-y-4">
+                <VisualizationControls
+                  showCongestionZones={showCongestionZones}
+                  showRobotSpeeds={showRobotSpeeds}
+                  showSpeedIndicators={showSpeedIndicators}
+                  onToggleCongestionZones={setShowCongestionZones}
+                  onToggleRobotSpeeds={setShowRobotSpeeds}
+                  onToggleSpeedIndicators={setShowSpeedIndicators}
+                />
+                
+                <Card className="glass-panel p-6">
+                  <ScrollArea className="h-[600px]">
+                    <div className="flex items-center justify-center">
+                      <WarehouseGrid
+                        warehouse={warehouse}
+                        robots={safeRobots}
+                        tasks={safeTasks}
+                        cellSize={40}
+                        congestionZones={congestionSystem.getZones()}
+                        showCongestionZones={showCongestionZones}
+                        showRobotSpeeds={showRobotSpeeds}
+                        showSpeedIndicators={showSpeedIndicators}
+                      />
+                    </div>
+                  </ScrollArea>
+                </Card>
+              </div>
 
               <div className="space-y-4">
                 <div>
