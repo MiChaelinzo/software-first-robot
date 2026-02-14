@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useKV } from '@github/spark/hooks'
 import { Toaster, toast } from 'sonner'
 import { WarehouseGrid } from '@/components/WarehouseGrid'
@@ -7,6 +7,8 @@ import { MetricsDashboard } from '@/components/MetricsDashboard'
 import { TaskQueue } from '@/components/TaskQueue'
 import { SimulationControls } from '@/components/SimulationControls'
 import { CollisionMonitor, type CollisionEvent } from '@/components/CollisionMonitor'
+import { CongestionHeatmap } from '@/components/CongestionHeatmap'
+import { AdaptiveLearningPanel } from '@/components/AdaptiveLearningPanel'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card } from '@/components/ui/card'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -19,6 +21,7 @@ import {
   checkCollisions,
   generateRandomTask 
 } from '@/lib/simulation'
+import { CongestionLearningSystem } from '@/lib/congestion-learning'
 import { AndroidLogo } from '@phosphor-icons/react'
 
 const GRID_WIDTH = 18
@@ -60,7 +63,13 @@ const initialMetrics: PerformanceMetrics = {
   pathsCalculated: 0,
   totalDistance: 0,
   nearMissIncidents: 0,
-  criticalAvoidances: 0
+  criticalAvoidances: 0,
+  totalCongestionEvents: 0,
+  speedAdjustments: 0,
+  avgCongestionLevel: 0,
+  highTrafficZones: 0,
+  learningRate: 0.1,
+  efficiencyGain: 0
 }
 
 function App() {
@@ -73,6 +82,7 @@ function App() {
   const [collisionEvents, setCollisionEvents] = useState<CollisionEvent[]>([])
   const [isOptimizing, setIsOptimizing] = useState(false)
 
+  const congestionSystem = useMemo(() => new CongestionLearningSystem(GRID_WIDTH, GRID_HEIGHT, 3), [])
   const lastUpdateRef = useRef<number>(Date.now())
   const completionTimesRef = useRef<number[]>([])
 
@@ -124,8 +134,13 @@ function App() {
     const deltaTime = (now - lastUpdateRef.current) / 1000
     lastUpdateRef.current = now
 
+    congestionSystem.analyzeTrafficPatterns(safeRobots)
+
     setRobots((currentRobots = initialRobots) => {
       const updatedRobots = currentRobots.map(robot => {
+        const adaptiveSpeed = congestionSystem.getAdaptiveSpeed(robot, currentRobots)
+        robot.speed = adaptiveSpeed
+
         const { robot: updatedRobot, metrics: robotMetrics } = updateRobotPosition(
           robot,
           warehouse,
@@ -161,8 +176,29 @@ function App() {
             })),
             ...prev
           ].slice(0, 50))
+
+          collisionMetrics.events.forEach(event => {
+            if (event.type === 'critical-avoidance') {
+              const avgPos = {
+                x: updatedRobots.find(r => r.id === event.robotIds[0])?.position.x || 0,
+                y: updatedRobots.find(r => r.id === event.robotIds[0])?.position.y || 0
+              }
+              congestionSystem.recordCollision(avgPos)
+            }
+          })
         }
       }
+
+      const learningMetrics = congestionSystem.getMetrics()
+      setMetrics((currentMetrics = initialMetrics) => ({
+        ...currentMetrics,
+        totalCongestionEvents: learningMetrics.totalCongestionEvents,
+        speedAdjustments: learningMetrics.speedAdjustments,
+        avgCongestionLevel: learningMetrics.avgCongestionLevel,
+        highTrafficZones: learningMetrics.highTrafficZones,
+        learningRate: learningMetrics.learningRate,
+        efficiencyGain: learningMetrics.efficiencyGain
+      }))
 
       return updatedRobots
     })
@@ -184,11 +220,16 @@ function App() {
           const avgTime = completionTimesRef.current.reduce((a, b) => a + b, 0) / 
                           completionTimesRef.current.length
           
-          setMetrics((currentMetrics = initialMetrics) => ({
-            ...currentMetrics,
-            tasksCompleted: currentMetrics.tasksCompleted + 1,
-            averageCompletionTime: avgTime
-          }))
+          setMetrics((currentMetrics = initialMetrics) => {
+            const successRate = currentMetrics.tasksCompleted / (currentMetrics.tasksCompleted + currentMetrics.collisionsAvoided + 1)
+            congestionSystem.updateLearningRate(successRate)
+            
+            return {
+              ...currentMetrics,
+              tasksCompleted: currentMetrics.tasksCompleted + 1,
+              averageCompletionTime: avgTime
+            }
+          })
 
           task.assignedRobotId = task.assignedRobotId + '-processed'
         }
@@ -205,7 +246,7 @@ function App() {
     })
 
     assignTasks()
-  }, [isRunning, speed, warehouse, assignTasks, setRobots, setTasks, setMetrics])
+  }, [isRunning, speed, warehouse, assignTasks, setRobots, setTasks, setMetrics, congestionSystem, safeRobots])
 
   useEffect(() => {
     if (!isRunning) return
@@ -243,6 +284,7 @@ function App() {
     setMetrics(initialMetrics)
     setCollisionEvents([])
     completionTimesRef.current = []
+    congestionSystem.reset()
     toast.info('Simulation reset')
   }
 
@@ -371,6 +413,24 @@ Analyze this robotics system and provide 2-3 specific, actionable optimization s
 
           <TabsContent value="analytics" className="space-y-6">
             <MetricsDashboard metrics={safeMetrics} />
+
+            <div className="grid lg:grid-cols-2 gap-6">
+              <AdaptiveLearningPanel
+                totalCongestionEvents={safeMetrics.totalCongestionEvents}
+                speedAdjustments={safeMetrics.speedAdjustments}
+                avgCongestionLevel={safeMetrics.avgCongestionLevel}
+                highTrafficZones={safeMetrics.highTrafficZones}
+                learningRate={safeMetrics.learningRate}
+                efficiencyGain={safeMetrics.efficiencyGain}
+              />
+
+              <CongestionHeatmap
+                zones={congestionSystem.getZones()}
+                gridWidth={GRID_WIDTH}
+                gridHeight={GRID_HEIGHT}
+                zoneSize={3}
+              />
+            </div>
 
             <div className="grid lg:grid-cols-2 gap-6">
               <Card className="glass-panel p-6">

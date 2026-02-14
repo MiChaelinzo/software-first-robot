@@ -43,6 +43,12 @@ export interface PerformanceMetrics {
   totalDistance: number
   nearMissIncidents: number
   criticalAvoidances: number
+  totalCongestionEvents: number
+  speedAdjustments: number
+  avgCongestionLevel: number
+  highTrafficZones: number
+  learningRate: number
+  efficiencyGain: number
 }
 
 export interface SimulationState {

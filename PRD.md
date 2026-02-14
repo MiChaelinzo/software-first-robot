@@ -20,11 +20,11 @@ This is a sophisticated robotics simulation requiring real-time pathfinding algo
 - **Success criteria**: 10 robots operate without collisions, complete tasks efficiently, maintain coordination, and demonstrate priority-based yielding
 
 ### Advanced Collision Avoidance System
-- **Functionality**: Multi-layered collision detection with critical distance monitoring, near-miss tracking, and priority-based yielding
-- **Purpose**: Demonstrate sophisticated spatial awareness and safe autonomous operation at scale
-- **Trigger**: Continuous monitoring during robot movement
-- **Progression**: Detect proximity → Calculate collision risk → Determine priority → Adjust speed/path → Log event → Resume normal operation
-- **Success criteria**: Zero collisions, logged avoidance events, smooth traffic flow, and priority task completion
+- **Functionality**: Multi-layered collision detection with critical distance monitoring, near-miss tracking, priority-based yielding, and adaptive speed learning based on congestion patterns
+- **Purpose**: Demonstrate sophisticated spatial awareness, safe autonomous operation at scale, and intelligent traffic management
+- **Trigger**: Continuous monitoring during robot movement with real-time traffic analysis
+- **Progression**: Detect proximity → Calculate collision risk → Analyze traffic patterns → Adjust speed adaptively → Determine priority → Log event → Update learning model → Resume optimal operation
+- **Success criteria**: Zero collisions, logged avoidance events, smooth traffic flow, priority task completion, and measurable efficiency improvements through learning
 
 ### Intelligent Pathfinding with A* Algorithm
 - **Functionality**: Real-time path calculation considering obstacles, other robots, and task locations
@@ -41,11 +41,11 @@ This is a sophisticated robotics simulation requiring real-time pathfinding algo
 - **Success criteria**: Tasks assigned efficiently, queue updates in real-time, robots never idle when tasks available
 
 ### Real-Time Performance Analytics
-- **Functionality**: Live metrics tracking efficiency, completion rates, and robot utilization
-- **Purpose**: Validate robot performance and demonstrate system optimization
+- **Functionality**: Live metrics tracking efficiency, completion rates, robot utilization, congestion patterns, and adaptive learning performance
+- **Purpose**: Validate robot performance, demonstrate system optimization, and showcase learning improvements
 - **Trigger**: Continuous data collection during simulation
-- **Progression**: Event occurs → Data logged → Metrics calculated → Dashboard updates → Historical trends tracked
-- **Success criteria**: Accurate metrics display, performance trends visible, insights actionable
+- **Progression**: Event occurs → Data logged → Traffic analyzed → Learning metrics updated → Dashboard updates → Historical trends tracked → Efficiency gains calculated
+- **Success criteria**: Accurate metrics display, performance trends visible, insights actionable, learning improvements quantified
 
 ### Interactive Warehouse Environment
 - **Functionality**: Grid-based warehouse with storage zones, charging stations, and dynamic obstacles
@@ -55,19 +55,29 @@ This is a sophisticated robotics simulation requiring real-time pathfinding algo
 - **Success criteria**: Environment updates affect robot behavior, layout persists, zones function as intended
 
 ### AI-Powered Decision Engine
-- **Functionality**: LLM-driven task prioritization and optimization suggestions
-- **Purpose**: Demonstrate AI integration in robotics control systems
-- **Trigger**: System requests optimization or user asks for insights
-- **Progression**: System collects current state → Generates prompt → LLM analyzes → Returns recommendations → System applies or presents to user
-- **Success criteria**: Meaningful insights generated, recommendations improve efficiency, AI responds contextually
+- **Functionality**: LLM-driven task prioritization, optimization suggestions, and adaptive learning system that adjusts robot speeds based on real-time congestion analysis
+- **Purpose**: Demonstrate AI integration in robotics control systems and autonomous optimization capabilities
+- **Trigger**: System requests optimization, user asks for insights, or congestion patterns trigger adaptive adjustments
+- **Progression**: System collects current state → Analyzes traffic patterns → Generates prompt → LLM analyzes → Returns recommendations → System applies adaptive speed adjustments or presents to user → Measures efficiency gains
+- **Success criteria**: Meaningful insights generated, recommendations improve efficiency, AI responds contextually, adaptive learning reduces congestion and increases throughput
+
+### Adaptive Congestion Learning System
+- **Functionality**: Real-time traffic pattern analysis with zone-based congestion tracking, historical data learning, and dynamic speed adjustments to optimize throughput
+- **Purpose**: Demonstrate machine learning principles in robotics, reduce congestion, prevent collisions, and continuously improve system efficiency
+- **Trigger**: Continuous analysis during simulation with speed adjustments every update cycle
+- **Progression**: Analyze robot positions → Calculate zone congestion → Review historical patterns → Predict optimal speeds → Apply adaptive adjustments → Record results → Update learning model → Calculate efficiency gains
+- **Success criteria**: Measurable reduction in congestion over time, improved robot throughput, fewer collision events, positive efficiency gain percentage, smooth traffic flow in high-density zones
 
 ## Edge Case Handling
-- **Robot Collision**: Robots detect proximity and pause/reroute to avoid collisions
+- **Robot Collision**: Robots detect proximity and pause/reroute to avoid collisions; congestion system learns from near-misses and adjusts speeds in high-traffic zones
 - **Unreachable Destination**: Task reassigned or marked as blocked if path cannot be found after multiple attempts
 - **Task Queue Empty**: Robots enter idle mode and return to charging stations
 - **Simultaneous Task Assignment**: Locking mechanism ensures tasks assigned to only one robot
 - **Environment Changes**: Robots recalculate paths mid-route if obstacles appear
 - **Performance Degradation**: System alerts user if robot efficiency drops below threshold
+- **High Congestion**: Adaptive learning system reduces speeds in congested zones and learns optimal traffic patterns over time
+- **Critical Priority Tasks**: System maintains higher speeds for critical tasks even in congested areas
+- **Learning Rate Adjustment**: System dynamically adjusts learning rate based on success metrics and collision avoidance performance
 
 ## Design Direction
 The design should evoke a sense of advanced technology and precision engineering - like stepping into a mission control center for an automated warehouse. It should feel professional, data-rich, and futuristic while maintaining clarity and usability. The interface should communicate intelligent automation, real-time monitoring, and cutting-edge robotics technology.
