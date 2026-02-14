@@ -24,6 +24,7 @@ import { SystemDashboard } from '@/components/SystemDashboard'
 import { DataExport } from '@/components/DataExport'
 import { VoiceCommandPanel } from '@/components/VoiceCommandPanel'
 import { VoiceIndicator } from '@/components/VoiceIndicator'
+import { VoiceFeedbackSettings } from '@/components/VoiceFeedbackSettings'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card } from '@/components/ui/card'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -39,6 +40,7 @@ import {
 import { CongestionLearningSystem } from '@/lib/congestion-learning'
 import { HeatTrailSystem } from '@/lib/heat-trail'
 import { useVoiceCommands, type VoiceCommand } from '@/hooks/use-voice-commands'
+import { useTextToSpeech } from '@/hooks/use-text-to-speech'
 import { AndroidLogo } from '@phosphor-icons/react'
 
 const GRID_WIDTH = 18
@@ -108,6 +110,26 @@ function App() {
   const [show3DGrid, setShow3DGrid] = useState(true)
   
   const [recentVoiceCommands, setRecentVoiceCommands] = useState<Array<{ command: string; transcript: string; timestamp: number }>>([])
+  
+  const [ttsEnabled, setTtsEnabled] = useKV<boolean>('tts_enabled', true)
+  const [ttsRate, setTtsRate] = useKV<number>('tts_rate', 1.1)
+  const [ttsPitch, setTtsPitch] = useKV<number>('tts_pitch', 1.0)
+  const [ttsVolume, setTtsVolume] = useKV<number>('tts_volume', 0.9)
+  
+  const {
+    speak,
+    cancel: cancelSpeech,
+    isSupported: isTtsSupported,
+    isSpeaking,
+    voices,
+    selectedVoice,
+    setSelectedVoice
+  } = useTextToSpeech({
+    enabled: ttsEnabled || true,
+    rate: ttsRate || 1.1,
+    pitch: ttsPitch || 1.0,
+    volume: ttsVolume || 0.9
+  })
 
   const congestionSystem = useMemo(() => new CongestionLearningSystem(GRID_WIDTH, GRID_HEIGHT, 3), [])
   const heatTrailSystem = useMemo(() => new HeatTrailSystem(50, 5000, 1), [])
@@ -138,6 +160,7 @@ function App() {
       command: 'start simulation',
       action: () => {
         setIsRunning(true)
+        speak('Simulation started')
         toast.success('Voice command: Simulation started')
       },
       patterns: [/start simulation/i, /start the simulation/i, /begin simulation/i, /play/i],
@@ -148,6 +171,7 @@ function App() {
       command: 'stop simulation',
       action: () => {
         setIsRunning(false)
+        speak('Simulation paused')
         toast.success('Voice command: Simulation paused')
       },
       patterns: [/stop simulation/i, /stop the simulation/i, /pause simulation/i, /pause/i],
@@ -158,6 +182,7 @@ function App() {
       command: 'reset simulation',
       action: () => {
         handleStop()
+        speak('Simulation reset complete')
         toast.success('Voice command: Simulation reset')
       },
       patterns: [/reset simulation/i, /reset the simulation/i, /restart simulation/i, /clear all/i],
@@ -168,6 +193,7 @@ function App() {
       command: 'add task',
       action: () => {
         handleAddTask()
+        speak('Task added to queue')
       },
       patterns: [/add task/i, /add a task/i, /create task/i, /new task/i, /add new task/i],
       description: 'Add a new task to the queue',
@@ -179,6 +205,7 @@ function App() {
         for (let i = 0; i < 5; i++) {
           handleAddTask()
         }
+        speak('Added 5 tasks to the queue')
         toast.success('Voice command: Added 5 tasks')
       },
       patterns: [/add five tasks/i, /add 5 tasks/i, /create five tasks/i, /create 5 tasks/i],
@@ -190,6 +217,7 @@ function App() {
       action: () => {
         setSpeed(prev => {
           const newSpeed = Math.min(prev + 0.5, 5)
+          speak(`Speed increased to ${newSpeed.toFixed(1)}x`)
           toast.success(`Voice command: Speed increased to ${newSpeed}x`)
           return newSpeed
         })
@@ -203,6 +231,7 @@ function App() {
       action: () => {
         setSpeed(prev => {
           const newSpeed = Math.max(prev - 0.5, 0.5)
+          speak(`Speed decreased to ${newSpeed.toFixed(1)}x`)
           toast.success(`Voice command: Speed decreased to ${newSpeed}x`)
           return newSpeed
         })
@@ -215,6 +244,7 @@ function App() {
       command: 'normal speed',
       action: () => {
         setSpeed(1)
+        speak('Speed set to normal')
         toast.success('Voice command: Speed set to 1x')
       },
       patterns: [/normal speed/i, /default speed/i, /regular speed/i, /reset speed/i],
@@ -229,6 +259,7 @@ function App() {
           .find(tab => tab.textContent?.includes('3D View'))
         if (threeDTab instanceof HTMLElement) {
           threeDTab.click()
+          speak('Switched to 3D view')
           toast.success('Voice command: Switched to 3D view')
         }
       },
@@ -244,6 +275,7 @@ function App() {
           .find(tab => tab.textContent?.includes('2D View'))
         if (twoDTab instanceof HTMLElement) {
           twoDTab.click()
+          speak('Switched to 2D view')
           toast.success('Voice command: Switched to 2D view')
         }
       },
@@ -259,6 +291,7 @@ function App() {
           .find(tab => tab.textContent?.includes('Analytics'))
         if (analyticsTab instanceof HTMLElement) {
           analyticsTab.click()
+          speak('Showing analytics')
           toast.success('Voice command: Switched to analytics')
         }
       },
@@ -271,6 +304,7 @@ function App() {
       action: () => {
         if (!isOptimizing) {
           handleAIOptimize()
+          speak('Running system optimization')
         }
       },
       patterns: [/optimize system/i, /optimize/i, /run optimization/i, /a i optimize/i, /ai optimize/i],
@@ -281,8 +315,10 @@ function App() {
       command: 'toggle heat trails',
       action: () => {
         setShowHeatTrails(prev => {
-          toast.success(`Voice command: Heat trails ${!prev ? 'enabled' : 'disabled'}`)
-          return !prev
+          const newState = !prev
+          speak(newState ? 'Heat trails enabled' : 'Heat trails disabled')
+          toast.success(`Voice command: Heat trails ${newState ? 'enabled' : 'disabled'}`)
+          return newState
         })
       },
       patterns: [/toggle heat trails/i, /show heat trails/i, /hide heat trails/i, /heat trails/i],
@@ -293,12 +329,47 @@ function App() {
       command: 'toggle congestion zones',
       action: () => {
         setShowCongestionZones(prev => {
-          toast.success(`Voice command: Congestion zones ${!prev ? 'enabled' : 'disabled'}`)
-          return !prev
+          const newState = !prev
+          speak(newState ? 'Congestion zones enabled' : 'Congestion zones disabled')
+          toast.success(`Voice command: Congestion zones ${newState ? 'enabled' : 'disabled'}`)
+          return newState
         })
       },
       patterns: [/toggle congestion/i, /show congestion/i, /hide congestion/i, /congestion zones/i],
       description: 'Toggle congestion zone visualization',
+      category: 'view'
+    },
+    {
+      command: 'enable voice feedback',
+      action: () => {
+        setTtsEnabled(true)
+        speak('Voice feedback enabled')
+        toast.success('Voice command: Voice feedback enabled')
+      },
+      patterns: [/enable voice feedback/i, /turn on voice feedback/i, /voice feedback on/i],
+      description: 'Enable text-to-speech voice feedback',
+      category: 'view'
+    },
+    {
+      command: 'disable voice feedback',
+      action: () => {
+        setTtsEnabled(false)
+        toast.success('Voice command: Voice feedback disabled')
+      },
+      patterns: [/disable voice feedback/i, /turn off voice feedback/i, /voice feedback off/i, /mute voice/i],
+      description: 'Disable text-to-speech voice feedback',
+      category: 'view'
+    },
+    {
+      command: 'status report',
+      action: () => {
+        const activeRobots = safeRobots.filter(r => r.status === 'moving').length
+        const pendingTasks = safeTasks.filter(t => t.status === 'pending').length
+        speak(`Status report. ${activeRobots} of ${safeRobots.length} robots active. ${pendingTasks} pending tasks. Simulation is ${isRunning ? 'running' : 'stopped'}.`)
+        toast.success('Voice command: Status report')
+      },
+      patterns: [/status report/i, /system status/i, /give me a status/i, /what's the status/i],
+      description: 'Get a spoken status report',
       category: 'view'
     },
     ...Array.from({ length: 10 }, (_, i) => {
@@ -308,6 +379,7 @@ function App() {
         command: `pause robot ${robotNum}`,
         action: () => {
           handleRobotPause(robotId)
+          speak(`Robot ${robotNum} paused`)
           toast.success(`Voice command: Paused robot ${robotNum}`)
         },
         patterns: [
@@ -326,6 +398,7 @@ function App() {
         command: `resume robot ${robotNum}`,
         action: () => {
           handleRobotResume(robotId)
+          speak(`Robot ${robotNum} resumed`)
           toast.success(`Voice command: Resumed robot ${robotNum}`)
         },
         patterns: [
@@ -337,7 +410,7 @@ function App() {
         category: 'robot' as const
       }
     })
-  ], [isOptimizing])
+  ], [isOptimizing, speak, safeRobots, safeTasks, isRunning, setTtsEnabled])
 
   const {
     isListening,
@@ -359,6 +432,12 @@ function App() {
       })
     }
   })
+
+  useEffect(() => {
+    if (isListening && ttsEnabled) {
+      speak('Voice control activated. I am ready for your commands.', true)
+    }
+  }, [isListening])
 
   useEffect(() => {
     const initHeatData = () => {
@@ -825,7 +904,7 @@ Analyze this robotics system and provide 2-3 specific, actionable optimization s
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Toaster position="top-right" theme="dark" />
-      <VoiceIndicator isListening={isListening} interimTranscript={interimTranscript} />
+      <VoiceIndicator isListening={isListening} interimTranscript={interimTranscript} isSpeaking={isSpeaking} />
       
       <div className="container mx-auto p-4 lg:p-6 space-y-6">
         <header className="flex items-center justify-between">
@@ -1234,6 +1313,22 @@ Analyze this robotics system and provide 2-3 specific, actionable optimization s
                     </div>
                   </Card>
                 </div>
+
+                <VoiceFeedbackSettings
+                  enabled={ttsEnabled || true}
+                  rate={ttsRate || 1.1}
+                  pitch={ttsPitch || 1.0}
+                  volume={ttsVolume || 0.9}
+                  voices={voices}
+                  selectedVoice={selectedVoice}
+                  isSpeaking={isSpeaking}
+                  onEnabledChange={(enabled) => setTtsEnabled(enabled)}
+                  onRateChange={(rate) => setTtsRate(rate)}
+                  onPitchChange={(pitch) => setTtsPitch(pitch)}
+                  onVolumeChange={(volume) => setTtsVolume(volume)}
+                  onVoiceChange={setSelectedVoice}
+                  onTest={() => speak('Voice feedback is working correctly. All systems operational.')}
+                />
               </div>
 
               <VoiceCommandPanel

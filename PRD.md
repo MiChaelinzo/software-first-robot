@@ -97,11 +97,18 @@ This is a sophisticated robotics simulation requiring real-time pathfinding algo
 - **Success criteria**: Clear visual differentiation between layers, accurate data representation, smooth rendering, actionable insights per layer
 
 ### Real-Time Voice Command Control
-- **Functionality**: Natural language voice recognition system allowing hands-free control of simulation, robots, tasks, and views using spoken commands
-- **Purpose**: Demonstrate cutting-edge voice UI integration for industrial robotics applications, enabling operators to control systems while performing other tasks
+- **Functionality**: Natural language voice recognition system allowing hands-free control of simulation, robots, tasks, and views using spoken commands with text-to-speech feedback responses
+- **Purpose**: Demonstrate cutting-edge voice UI integration for industrial robotics applications, enabling operators to control systems while performing other tasks and receive immediate auditory confirmation
 - **Trigger**: User activates microphone and speaks natural language commands
-- **Progression**: User clicks "Start" → Microphone activates → User speaks command → Speech recognized → Pattern matched → Action executed → Confirmation displayed → Command logged
-- **Success criteria**: High accuracy command recognition, natural language processing, comprehensive command library (30+ commands), real-time feedback, visual listening indicators, command history tracking
+- **Progression**: User clicks "Start" → Microphone activates → User speaks command → Speech recognized → Pattern matched → Action executed → System speaks confirmation → Visual feedback displayed → Command logged
+- **Success criteria**: High accuracy command recognition, natural language processing, comprehensive command library (30+ commands), real-time audio and visual feedback, adjustable voice settings, visual listening and speaking indicators, command history tracking
+
+### Voice Feedback System (Text-to-Speech)
+- **Functionality**: Intelligent text-to-speech engine that provides spoken responses to voice commands and status updates, with customizable voice, speed, pitch, and volume settings
+- **Purpose**: Create complete voice interaction experience for hands-free operation and accessibility, providing auditory confirmation of commands and system status
+- **Trigger**: Voice command executed, status report requested, or system event occurs
+- **Progression**: Command recognized → Action executed → TTS generates speech → Audio plays through speakers → Visual indicator shows speaking state → Queue manages multiple messages
+- **Success criteria**: Clear, natural-sounding voice output, instant feedback for commands, configurable voice parameters (rate, pitch, volume, voice selection), support for multiple system voices, queue management for overlapping messages, visual speaking indicator, settings persistence
 
 ### AI-Powered System Intelligence
 - **Functionality**: LLM-driven task prioritization, optimization suggestions, and adaptive learning system that adjusts robot speeds based on real-time congestion analysis
@@ -198,6 +205,9 @@ Animations should emphasize the mechanical precision and fluid intelligence of a
 - Voice indicator: Pulsing microphone icon with scale animation (1-1.2x over 1.5s), listening bars animate with staggered delays
 - Voice command feedback: Toast notifications slide in from right with 200ms duration, accent color for command confirmations
 - Transcript display: Fade in from top with -10px y offset over 200ms, interim text shown in italic with reduced opacity
+- Voice speaking indicator: Transform microphone to speaker icon with 200ms transition, primary color scheme when speaking vs accent when listening
+- TTS settings sliders: Smooth value changes with 150ms transition, real-time preview updates, disabled state with 50% opacity
+- Voice test button: Pulse animation on click, disabled state during speech playback
 
 ## Component Selection
 - **Components**: 
@@ -213,6 +223,9 @@ Animations should emphasize the mechanical precision and fluid intelligence of a
   - Alert for system warnings and optimization suggestions
   - Switch for 3D view controls (paths, grid, lighting)
   - ScrollArea for voice command lists and recent command history
+  - Select for voice selection dropdown
+  - Slider for TTS rate, pitch, and volume controls
+  - Switch for enabling/disabling voice feedback
 
 - **Customizations**: 
   - Custom robot visualizations using SVG with directional indicators
@@ -224,6 +237,8 @@ Animations should emphasize the mechanical precision and fluid intelligence of a
   - WebGL-powered real-time rendering with shadows, fog, and post-processing effects
   - Custom voice indicator with animated microphone and sound wave bars
   - Real-time transcript display with interim results shown in muted style
+  - Custom voice feedback settings panel with adjustable TTS parameters
+  - Dual-mode voice indicator (listening/speaking) with icon morphing animation
 
 - **States**: 
   - Buttons: Default (subtle glow), hover (brighter glow + lift), active (pressed inset), disabled (50% opacity)
@@ -247,6 +262,10 @@ Animations should emphasize the mechanical precision and fluid intelligence of a
   - MapPin for trail point markers
   - Cube for 3D view mode
   - GridFour for 3D grid toggle
+  - Microphone for voice listening state
+  - MicrophoneSlash for inactive voice state
+  - SpeakerHigh for TTS speaking state and voice feedback settings
+  - SpeakerSlash for disabled voice feedback
 
 - **Spacing**: 
   - Panel padding: p-6 for main containers, p-4 for nested cards
