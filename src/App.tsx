@@ -25,6 +25,11 @@ import { DataExport } from '@/components/DataExport'
 import { VoiceCommandPanel } from '@/components/VoiceCommandPanel'
 import { VoiceIndicator } from '@/components/VoiceIndicator'
 import { VoiceFeedbackSettings } from '@/components/VoiceFeedbackSettings'
+import { DynamicBackground } from '@/components/DynamicBackground'
+import { MouseTrail } from '@/components/MouseTrail'
+import { ParticleEffects } from '@/components/ParticleEffects'
+import { DataStreams } from '@/components/DataStreams'
+import { ScanlineEffect } from '@/components/ScanlineEffect'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card } from '@/components/ui/card'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -158,6 +163,7 @@ function App() {
   const [speedHeatData, setSpeedHeatData] = useState<number[][]>([])
   const [collisionHeatData, setCollisionHeatData] = useState<number[][]>([])
   const [efficiencyHeatData, setEfficiencyHeatData] = useState<number[][]>([])
+  const [particleExplosions, setParticleExplosions] = useState<Array<{ x: number; y: number; timestamp: number; color?: string }>>([])
 
   const safeRobots = robots || initialRobots
   const safeTasks = tasks || []
@@ -452,6 +458,16 @@ function App() {
   }, [isListening])
 
   useEffect(() => {
+    const interval = setInterval(() => {
+      setParticleExplosions(prev => 
+        prev.filter(explosion => Date.now() - explosion.timestamp < 3000)
+      )
+    }, 1000)
+    
+    return () => clearInterval(interval)
+  }, [])
+
+  useEffect(() => {
     const initHeatData = () => {
       const traffic: number[][] = Array(GRID_HEIGHT).fill(null).map(() => Array(GRID_WIDTH).fill(0))
       const speed: number[][] = Array(GRID_HEIGHT).fill(null).map(() => Array(GRID_WIDTH).fill(0))
@@ -654,6 +670,16 @@ function App() {
         
         if (task.status === 'completed' && task.completedAt && !task.assignedRobotId?.includes('processed')) {
           playAudioCue('task_completed')
+          
+          const robot = safeRobots.find(r => r.id === task.assignedRobotId)
+          if (robot) {
+            const screenX = (robot.position.x / GRID_WIDTH) * window.innerWidth
+            const screenY = (robot.position.y / GRID_HEIGHT) * window.innerHeight
+            setParticleExplosions(prev => [
+              ...prev,
+              { x: screenX, y: screenY, timestamp: Date.now(), color: robot.color }
+            ])
+          }
           
           const completionTime = (task.completedAt - task.createdAt) / 1000
           completionTimesRef.current.push(completionTime)
@@ -924,10 +950,15 @@ Analyze this robotics system and provide 2-3 specific, actionable optimization s
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <DynamicBackground />
+      <ScanlineEffect />
+      <DataStreams />
+      <MouseTrail />
+      <ParticleEffects explosions={particleExplosions} />
       <Toaster position="top-right" theme="dark" />
       <VoiceIndicator isListening={isListening} interimTranscript={interimTranscript} isSpeaking={isSpeaking} />
       
-      <div className="container mx-auto p-4 lg:p-6 space-y-6">
+      <div className="container mx-auto p-4 lg:p-6 space-y-6 relative z-10">
         <header className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-primary/20">
