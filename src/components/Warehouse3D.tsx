@@ -1,4 +1,4 @@
-import { useEffect, useRef, useMemo } from 'react'
+import { useEffect, useRef, useMemo, useState, useImperativeHandle, forwardRef } from 'react'
 import * as THREE from 'three'
 import type { Robot, Task, WarehouseCell } from '@/lib/types'
 
@@ -11,14 +11,28 @@ interface Warehouse3DProps {
   showGrid?: boolean
 }
 
-export function Warehouse3D({
+interface CameraControls {
+  azimuthAngle: number
+  polarAngle: number
+  distance: number
+  targetPosition: THREE.Vector3
+  isDragging: boolean
+  lastMouseX: number
+  lastMouseY: number
+}
+
+export interface Warehouse3DHandle {
+  resetCamera: () => void
+}
+
+export const Warehouse3D = forwardRef<Warehouse3DHandle, Warehouse3DProps>(({
   warehouse,
   robots,
   tasks,
   isRunning,
   showPaths = true,
   showGrid = true
-}: Warehouse3DProps) {
+}, ref) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const sceneRef = useRef<THREE.Scene | null>(null)
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null)
@@ -30,6 +44,28 @@ export function Warehouse3D({
 
   const gridWidth = warehouse[0]?.length || 0
   const gridHeight = warehouse.length || 0
+
+  const getDefaultCameraState = () => ({
+    azimuthAngle: Math.PI / 4,
+    polarAngle: Math.PI / 3,
+    distance: Math.max(gridWidth, gridHeight) * 1.8,
+    targetPosition: new THREE.Vector3(gridWidth / 2, 0, gridHeight / 2),
+    isDragging: false,
+    lastMouseX: 0,
+    lastMouseY: 0
+  })
+
+  const cameraControlsRef = useRef<CameraControls>(getDefaultCameraState())
+
+  useImperativeHandle(ref, () => ({
+    resetCamera: () => {
+      const defaultState = getDefaultCameraState()
+      cameraControlsRef.current.azimuthAngle = defaultState.azimuthAngle
+      cameraControlsRef.current.polarAngle = defaultState.polarAngle
+      cameraControlsRef.current.distance = defaultState.distance
+      cameraControlsRef.current.targetPosition = defaultState.targetPosition
+    }
+  }))
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -45,8 +81,17 @@ export function Warehouse3D({
       0.1,
       1000
     )
-    camera.position.set(gridWidth * 1.2, gridHeight * 1.5, gridHeight * 1.2)
-    camera.lookAt(gridWidth / 2, 0, gridHeight / 2)
+    
+    const controls = cameraControlsRef.current
+    const updateCameraPosition = () => {
+      const x = controls.targetPosition.x + controls.distance * Math.sin(controls.polarAngle) * Math.cos(controls.azimuthAngle)
+      const y = controls.targetPosition.y + controls.distance * Math.cos(controls.polarAngle)
+      const z = controls.targetPosition.z + controls.distance * Math.sin(controls.polarAngle) * Math.sin(controls.azimuthAngle)
+      
+      camera.position.set(x, y, z)
+      camera.lookAt(controls.targetPosition)
+    }
+    updateCameraPosition()
     cameraRef.current = camera
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
@@ -171,30 +216,109 @@ export function Warehouse3D({
     }
     window.addEventListener('resize', handleResize)
 
-    let cameraAngle = 0
+    const handleMouseDown = (e: MouseEvent) => {
+      const controls = cameraControlsRef.current
+      controls.isDragging = true
+      controls.lastMouseX = e.clientX
+      controls.lastMouseY = e.clientY
+    }
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const controls = cameraControlsRef.current
+      if (!controls.isDragging) return
+
+      const deltaX = e.clientX - controls.lastMouseX
+      const deltaY = e.clientY - controls.lastMouseY
+
+      controls.azimuthAngle -= deltaX * 0.005
+      controls.polarAngle = Math.max(0.1, Math.min(Math.PI / 2 - 0.1, controls.polarAngle - deltaY * 0.005))
+
+      controls.lastMouseX = e.clientX
+      controls.lastMouseY = e.clientY
+
+      updateCameraPosition()
+    }
+
+    const handleMouseUp = () => {
+      cameraControlsRef.current.isDragging = false
+    }
+
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault()
+      const controls = cameraControlsRef.current
+      const zoomSpeed = 0.1
+      const minDistance = Math.max(gridWidth, gridHeight) * 0.8
+      const maxDistance = Math.max(gridWidth, gridHeight) * 3.5
+
+      controls.distance = Math.max(minDistance, Math.min(maxDistance, controls.distance + e.deltaY * zoomSpeed))
+      updateCameraPosition()
+    }
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 1) {
+        const controls = cameraControlsRef.current
+        controls.isDragging = true
+        controls.lastMouseX = e.touches[0].clientX
+        controls.lastMouseY = e.touches[0].clientY
+      }
+    }
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length === 1) {
+        const controls = cameraControlsRef.current
+        if (!controls.isDragging) return
+
+        const deltaX = e.touches[0].clientX - controls.lastMouseX
+        const deltaY = e.touches[0].clientY - controls.lastMouseY
+
+        controls.azimuthAngle -= deltaX * 0.005
+        controls.polarAngle = Math.max(0.1, Math.min(Math.PI / 2 - 0.1, controls.polarAngle - deltaY * 0.005))
+
+        controls.lastMouseX = e.touches[0].clientX
+        controls.lastMouseY = e.touches[0].clientY
+
+        updateCameraPosition()
+      }
+    }
+
+    const handleTouchEnd = () => {
+      cameraControlsRef.current.isDragging = false
+    }
+
+    const canvas = renderer.domElement
+    canvas.addEventListener('mousedown', handleMouseDown)
+    canvas.addEventListener('mousemove', handleMouseMove)
+    canvas.addEventListener('mouseup', handleMouseUp)
+    canvas.addEventListener('mouseleave', handleMouseUp)
+    canvas.addEventListener('wheel', handleWheel, { passive: false })
+    canvas.addEventListener('touchstart', handleTouchStart)
+    canvas.addEventListener('touchmove', handleTouchMove)
+    canvas.addEventListener('touchend', handleTouchEnd)
+
     const animate = () => {
       animationFrameRef.current = requestAnimationFrame(animate)
-
-      if (isRunning) {
-        cameraAngle += 0.001
-        camera.position.x = gridWidth / 2 + Math.cos(cameraAngle) * gridWidth * 1.2
-        camera.position.z = gridHeight / 2 + Math.sin(cameraAngle) * gridHeight * 1.2
-        camera.lookAt(gridWidth / 2, 0, gridHeight / 2)
-      }
-
+      updateCameraPosition()
       renderer.render(scene, camera)
     }
     animate()
 
     return () => {
       window.removeEventListener('resize', handleResize)
+      canvas.removeEventListener('mousedown', handleMouseDown)
+      canvas.removeEventListener('mousemove', handleMouseMove)
+      canvas.removeEventListener('mouseup', handleMouseUp)
+      canvas.removeEventListener('mouseleave', handleMouseUp)
+      canvas.removeEventListener('wheel', handleWheel)
+      canvas.removeEventListener('touchstart', handleTouchStart)
+      canvas.removeEventListener('touchmove', handleTouchMove)
+      canvas.removeEventListener('touchend', handleTouchEnd)
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current)
       }
       renderer.dispose()
       containerRef.current?.removeChild(renderer.domElement)
     }
-  }, [gridWidth, gridHeight, warehouse, isRunning, showGrid])
+  }, [gridWidth, gridHeight, warehouse, showGrid])
 
   useEffect(() => {
     if (!sceneRef.current) return
@@ -383,8 +507,8 @@ export function Warehouse3D({
   return (
     <div 
       ref={containerRef} 
-      className="w-full h-full rounded-lg overflow-hidden"
+      className="w-full h-full rounded-lg overflow-hidden cursor-grab active:cursor-grabbing"
       style={{ minHeight: '600px' }}
     />
   )
-}
+})

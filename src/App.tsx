@@ -11,7 +11,7 @@ import { CongestionHeatmap } from '@/components/CongestionHeatmap'
 import { AdaptiveLearningPanel } from '@/components/AdaptiveLearningPanel'
 import { VisualizationControls } from '@/components/VisualizationControls'
 import { HeatTrailStats } from '@/components/HeatTrailStats'
-import { Warehouse3D } from '@/components/Warehouse3D'
+import { Warehouse3D, type Warehouse3DHandle } from '@/components/Warehouse3D'
 import { View3DControls } from '@/components/View3DControls'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card } from '@/components/ui/card'
@@ -99,6 +99,7 @@ function App() {
   const heatTrailSystem = useMemo(() => new HeatTrailSystem(50, 5000, 1), [])
   const lastUpdateRef = useRef<number>(Date.now())
   const completionTimesRef = useRef<number[]>([])
+  const warehouse3DRef = useRef<Warehouse3DHandle>(null)
   const [heatTrailStats, setHeatTrailStats] = useState({
     activeTrails: 0,
     totalTrailPoints: 0,
@@ -478,10 +479,12 @@ Analyze this robotics system and provide 2-3 specific, actionable optimization s
                   showGrid={show3DGrid}
                   onTogglePaths={setShow3DPaths}
                   onToggleGrid={setShow3DGrid}
+                  onResetCamera={() => warehouse3DRef.current?.resetCamera()}
                 />
                 
                 <Card className="glass-panel p-6">
                   <Warehouse3D
+                    ref={warehouse3DRef}
                     warehouse={warehouse}
                     robots={safeRobots}
                     tasks={safeTasks}
