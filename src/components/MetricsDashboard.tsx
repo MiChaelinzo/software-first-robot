@@ -1,6 +1,6 @@
 import { Card } from '@/components/ui/card'
 import type { PerformanceMetrics } from '@/lib/types'
-import { CheckCircle, Clock, Package, Gauge, ArrowsClockwise, Path } from '@phosphor-icons/react'
+import { CheckCircle, Clock, Package, Gauge, ArrowsClockwise, Path, Warning, ShieldCheck } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
 
 interface MetricsDashboardProps {
@@ -50,11 +50,25 @@ export function MetricsDashboard({ metrics }: MetricsDashboardProps) {
       icon: Path,
       color: 'text-success',
       bgColor: 'bg-success/10'
+    },
+    {
+      label: 'Near-Miss Incidents',
+      value: metrics.nearMissIncidents,
+      icon: Warning,
+      color: 'text-warning',
+      bgColor: 'bg-warning/10'
+    },
+    {
+      label: 'Critical Avoidances',
+      value: metrics.criticalAvoidances,
+      icon: ShieldCheck,
+      color: 'text-destructive',
+      bgColor: 'bg-destructive/10'
     }
   ]
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
       {metricCards.map((metric, index) => (
         <motion.div
           key={metric.label}

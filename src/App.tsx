@@ -6,6 +6,7 @@ import { RobotStatusCard } from '@/components/RobotStatusCard'
 import { MetricsDashboard } from '@/components/MetricsDashboard'
 import { TaskQueue } from '@/components/TaskQueue'
 import { SimulationControls } from '@/components/SimulationControls'
+import { CollisionMonitor, type CollisionEvent } from '@/components/CollisionMonitor'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card } from '@/components/ui/card'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -28,14 +29,25 @@ const ROBOT_COLORS = [
   'oklch(0.75 0.20 265)',
   'oklch(0.75 0.18 100)',
   'oklch(0.70 0.22 325)',
-  'oklch(0.75 0.22 25)'
+  'oklch(0.75 0.22 25)',
+  'oklch(0.72 0.20 200)',
+  'oklch(0.68 0.22 50)',
+  'oklch(0.75 0.18 290)',
+  'oklch(0.70 0.20 170)',
+  'oklch(0.73 0.21 340)'
 ]
 
 const initialRobots: Robot[] = [
   createRobot('robot-01', { x: 2, y: 2 }, ROBOT_COLORS[0]),
   createRobot('robot-02', { x: 15, y: 2 }, ROBOT_COLORS[1]),
   createRobot('robot-03', { x: 2, y: 11 }, ROBOT_COLORS[2]),
-  createRobot('robot-04', { x: 15, y: 11 }, ROBOT_COLORS[3])
+  createRobot('robot-04', { x: 15, y: 11 }, ROBOT_COLORS[3]),
+  createRobot('robot-05', { x: 8, y: 2 }, ROBOT_COLORS[4]),
+  createRobot('robot-06', { x: 11, y: 2 }, ROBOT_COLORS[5]),
+  createRobot('robot-07', { x: 8, y: 11 }, ROBOT_COLORS[6]),
+  createRobot('robot-08', { x: 11, y: 11 }, ROBOT_COLORS[7]),
+  createRobot('robot-09', { x: 5, y: 6 }, ROBOT_COLORS[8]),
+  createRobot('robot-10', { x: 12, y: 6 }, ROBOT_COLORS[9])
 ]
 
 const initialMetrics: PerformanceMetrics = {
@@ -46,7 +58,9 @@ const initialMetrics: PerformanceMetrics = {
   robotUtilization: 0,
   collisionsAvoided: 0,
   pathsCalculated: 0,
-  totalDistance: 0
+  totalDistance: 0,
+  nearMissIncidents: 0,
+  criticalAvoidances: 0
 }
 
 function App() {
@@ -56,6 +70,7 @@ function App() {
   const [robots, setRobots] = useKV<Robot[]>('robots', initialRobots)
   const [tasks, setTasks] = useKV<Task[]>('tasks', [])
   const [metrics, setMetrics] = useKV<PerformanceMetrics>('metrics', initialMetrics)
+  const [collisionEvents, setCollisionEvents] = useState<CollisionEvent[]>([])
   const [isOptimizing, setIsOptimizing] = useState(false)
 
   const lastUpdateRef = useRef<number>(Date.now())
@@ -128,12 +143,25 @@ function App() {
         return updatedRobot
       })
 
-      const collisions = checkCollisions(updatedRobots)
-      if (collisions > 0) {
+      const collisionMetrics = checkCollisions(updatedRobots)
+      if (collisionMetrics.collisionsAvoided > 0 || collisionMetrics.nearMissIncidents > 0 || collisionMetrics.criticalAvoidances > 0) {
         setMetrics((currentMetrics = initialMetrics) => ({
           ...currentMetrics,
-          collisionsAvoided: currentMetrics.collisionsAvoided + collisions
+          collisionsAvoided: currentMetrics.collisionsAvoided + collisionMetrics.collisionsAvoided,
+          nearMissIncidents: currentMetrics.nearMissIncidents + collisionMetrics.nearMissIncidents,
+          criticalAvoidances: currentMetrics.criticalAvoidances + collisionMetrics.criticalAvoidances
         }))
+
+        if (collisionMetrics.events.length > 0) {
+          setCollisionEvents(prev => [
+            ...collisionMetrics.events.map(event => ({
+              ...event,
+              id: `event-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+              timestamp: Date.now()
+            })),
+            ...prev
+          ].slice(0, 50))
+        }
       }
 
       return updatedRobots
@@ -213,6 +241,7 @@ function App() {
     setRobots(initialRobots)
     setTasks([])
     setMetrics(initialMetrics)
+    setCollisionEvents([])
     completionTimesRef.current = []
     toast.info('Simulation reset')
   }
@@ -249,12 +278,13 @@ Analyze this robotics system and provide 2-3 specific, actionable optimization s
   }
 
   useEffect(() => {
-    if (safeTasks.length === 0 && isRunning) {
+    if (safeTasks.length < 5 && isRunning) {
       const timer = setTimeout(() => {
-        for (let i = 0; i < 3; i++) {
+        const tasksToAdd = 5 - safeTasks.length
+        for (let i = 0; i < tasksToAdd; i++) {
           handleAddTask()
         }
-      }, 2000)
+      }, 1500)
       return () => clearTimeout(timer)
     }
   }, [safeTasks.length, isRunning])
@@ -398,6 +428,8 @@ Analyze this robotics system and provide 2-3 specific, actionable optimization s
                 </div>
               </Card>
             </div>
+
+            <CollisionMonitor events={collisionEvents} />
           </TabsContent>
         </Tabs>
       </div>

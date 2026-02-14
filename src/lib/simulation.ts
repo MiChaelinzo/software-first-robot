@@ -18,6 +18,8 @@ export function createWarehouse(width: number, height: number): WarehouseCell[][
       
       if (x === 1 && y === 1) type = 'charging'
       if (x === width - 2 && y === 1) type = 'charging'
+      if (x === 1 && y === height - 2) type = 'charging'
+      if (x === width - 2 && y === height - 2) type = 'charging'
       
       if ((x >= 5 && x <= 7) && (y >= 3 && y <= 5)) type = 'storage'
       if ((x >= 10 && x <= 12) && (y >= 3 && y <= 5)) type = 'storage'
@@ -129,30 +131,144 @@ export function updateRobotPosition(
   return { robot, metrics }
 }
 
-export function checkCollisions(robots: Robot[]): number {
+export function checkCollisions(robots: Robot[]): { 
+  collisionsAvoided: number
+  nearMissIncidents: number
+  criticalAvoidances: number
+  events: Array<{
+    type: 'near-miss' | 'collision-avoided' | 'critical-avoidance'
+    robotIds: string[]
+    distance: number
+    description: string
+  }>
+} {
   let collisionsAvoided = 0
+  let nearMissIncidents = 0
+  let criticalAvoidances = 0
+  const events: Array<{
+    type: 'near-miss' | 'collision-avoided' | 'critical-avoidance'
+    robotIds: string[]
+    distance: number
+    description: string
+  }> = []
+  
+  const CRITICAL_DISTANCE = 1.0
+  const WARNING_DISTANCE = 2.0
+  const COLLISION_DISTANCE = 0.5
   
   for (let i = 0; i < robots.length; i++) {
-    for (let j = i + 1; j < robots.length; j++) {
-      const distance = calculateDistance(robots[i].position, robots[j].position)
+    let nearestDistance = Infinity
+    let shouldYield = false
+    
+    for (let j = 0; j < robots.length; j++) {
+      if (i === j) continue
       
-      if (distance < 1.5 && (robots[i].status === 'moving' || robots[j].status === 'moving')) {
-        collisionsAvoided++
+      const distance = calculateDistance(robots[i].position, robots[j].position)
+      nearestDistance = Math.min(nearestDistance, distance)
+      
+      if (distance < COLLISION_DISTANCE) {
+        criticalAvoidances++
+        events.push({
+          type: 'critical-avoidance',
+          robotIds: [robots[i].id, robots[j].id],
+          distance,
+          description: `Emergency stop initiated to prevent collision`
+        })
         
-        if (robots[i].status === 'moving' && robots[i].path.length > 0) {
-          robots[i].speed = 0.5
+        const robotIPriority = getPriority(robots[i])
+        const robotJPriority = getPriority(robots[j])
+        
+        if (robotIPriority < robotJPriority) {
+          shouldYield = true
+        } else if (robotIPriority === robotJPriority) {
+          if (i > j) shouldYield = true
         }
-        if (robots[j].status === 'moving' && robots[j].path.length > 0) {
-          robots[j].speed = 0.5
-        }
-      } else {
-        if (robots[i].speed < 1) robots[i].speed = Math.min(1, robots[i].speed + 0.1)
-        if (robots[j].speed < 1) robots[j].speed = Math.min(1, robots[j].speed + 0.1)
       }
+      
+      if (robots[i].status === 'moving' && robots[j].status === 'moving') {
+        if (distance < CRITICAL_DISTANCE) {
+          collisionsAvoided++
+          
+          const iMovingToward = isMovingToward(robots[i], robots[j])
+          const jMovingToward = isMovingToward(robots[j], robots[i])
+          
+          if (iMovingToward || jMovingToward) {
+            events.push({
+              type: 'collision-avoided',
+              robotIds: [robots[i].id, robots[j].id],
+              distance,
+              description: `Robots adjusted speed to maintain safe distance`
+            })
+          }
+          
+          if (iMovingToward && jMovingToward) {
+            const robotIPriority = getPriority(robots[i])
+            const robotJPriority = getPriority(robots[j])
+            
+            if (robotIPriority < robotJPriority) {
+              robots[i].speed = 0.3
+            } else if (robotIPriority > robotJPriority) {
+              robots[j].speed = 0.3
+            } else {
+              if (i > j) {
+                robots[i].speed = 0.3
+              } else {
+                robots[j].speed = 0.3
+              }
+            }
+          } else if (iMovingToward) {
+            robots[i].speed = 0.4
+          } else if (jMovingToward) {
+            robots[j].speed = 0.4
+          }
+        } else if (distance < WARNING_DISTANCE) {
+          if (isMovingToward(robots[i], robots[j])) {
+            nearMissIncidents++
+            events.push({
+              type: 'near-miss',
+              robotIds: [robots[i].id, robots[j].id],
+              distance,
+              description: `Robots detected in proximity, monitoring closely`
+            })
+            robots[i].speed = Math.min(robots[i].speed, 0.7)
+          }
+        }
+      }
+    }
+    
+    if (shouldYield && robots[i].status === 'moving') {
+      robots[i].speed = 0.2
+    }
+    
+    if (nearestDistance > WARNING_DISTANCE && robots[i].speed < 1) {
+      robots[i].speed = Math.min(1, robots[i].speed + 0.15)
     }
   }
   
-  return collisionsAvoided
+  return { collisionsAvoided, nearMissIncidents, criticalAvoidances, events }
+}
+
+function getPriority(robot: Robot): number {
+  if (!robot.currentTask) return 0
+  
+  const priorityMap = {
+    'critical': 4,
+    'high': 3,
+    'medium': 2,
+    'low': 1
+  }
+  
+  return priorityMap[robot.currentTask.priority] || 0
+}
+
+function isMovingToward(robotA: Robot, robotB: Robot): boolean {
+  if (robotA.path.length === 0) return false
+  
+  const nextPos = robotA.path[0]
+  const currentDist = calculateDistance(robotA.position, robotB.position)
+  const nextDist = calculateDistance(nextPos, robotB.position)
+  
+  return nextDist < currentDist
 }
 
 export function generateRandomTask(

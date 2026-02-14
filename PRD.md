@@ -13,11 +13,18 @@ This is a sophisticated robotics simulation requiring real-time pathfinding algo
 ## Essential Features
 
 ### Multi-Robot Fleet Management
-- **Functionality**: Simulate 3-5 autonomous warehouse robots operating simultaneously in a shared environment
-- **Purpose**: Demonstrate coordination, collision avoidance, and parallel task execution
+- **Functionality**: Simulate 10 autonomous warehouse robots operating simultaneously in a shared environment with advanced collision avoidance
+- **Purpose**: Demonstrate coordination, collision avoidance, and parallel task execution at scale
 - **Trigger**: Robots activate automatically on simulation start
-- **Progression**: Robot spawns → Requests task assignment → Calculates optimal path → Executes movement → Updates status → Requests next task
-- **Success criteria**: Multiple robots operate without collisions, complete tasks efficiently, and maintain coordination
+- **Progression**: Robot spawns → Requests task assignment → Calculates optimal path → Executes movement → Updates status → Avoids collisions → Requests next task
+- **Success criteria**: 10 robots operate without collisions, complete tasks efficiently, maintain coordination, and demonstrate priority-based yielding
+
+### Advanced Collision Avoidance System
+- **Functionality**: Multi-layered collision detection with critical distance monitoring, near-miss tracking, and priority-based yielding
+- **Purpose**: Demonstrate sophisticated spatial awareness and safe autonomous operation at scale
+- **Trigger**: Continuous monitoring during robot movement
+- **Progression**: Detect proximity → Calculate collision risk → Determine priority → Adjust speed/path → Log event → Resume normal operation
+- **Success criteria**: Zero collisions, logged avoidance events, smooth traffic flow, and priority task completion
 
 ### Intelligent Pathfinding with A* Algorithm
 - **Functionality**: Real-time path calculation considering obstacles, other robots, and task locations

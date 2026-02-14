@@ -41,6 +41,8 @@ export interface PerformanceMetrics {
   collisionsAvoided: number
   pathsCalculated: number
   totalDistance: number
+  nearMissIncidents: number
+  criticalAvoidances: number
 }
 
 export interface SimulationState {
