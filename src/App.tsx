@@ -366,6 +366,34 @@ Analyze this robotics system and provide 2-3 specific, actionable optimization s
     }
   }, [safeTasks.length, isRunning])
 
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
+        return
+      }
+
+      const speedPresets: Record<string, number> = {
+        '1': 0.5,
+        '2': 1.0,
+        '3': 1.5,
+        '4': 2.0,
+        '5': 3.0,
+      }
+
+      if (speedPresets[event.key]) {
+        const newSpeed = speedPresets[event.key]
+        setSpeed(newSpeed)
+        toast.success(`Speed set to ${newSpeed}x`, {
+          description: `Preset ${event.key} activated`,
+          duration: 2000
+        })
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyPress)
+    return () => window.removeEventListener('keydown', handleKeyPress)
+  }, [])
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Toaster position="top-right" theme="dark" />

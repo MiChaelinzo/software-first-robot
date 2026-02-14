@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Slider } from '@/components/ui/slider'
+import { Badge } from '@/components/ui/badge'
 import { Play, Pause, Stop, Plus, Brain } from '@phosphor-icons/react'
 
 interface SimulationControlsProps {
@@ -13,6 +14,14 @@ interface SimulationControlsProps {
   onAIOptimize: () => void
   isOptimizing?: boolean
 }
+
+const SPEED_PRESETS = [
+  { key: '1', speed: 0.5, label: 'Slow' },
+  { key: '2', speed: 1.0, label: 'Normal' },
+  { key: '3', speed: 1.5, label: 'Fast' },
+  { key: '4', speed: 2.0, label: 'Faster' },
+  { key: '5', speed: 3.0, label: 'Max' },
+]
 
 export function SimulationControls({
   isRunning,
@@ -73,6 +82,29 @@ export function SimulationControls({
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-muted-foreground mr-1">Presets:</span>
+            {SPEED_PRESETS.map((preset) => (
+              <Button
+                key={preset.key}
+                onClick={() => onSpeedChange(preset.speed)}
+                variant={Math.abs(speed - preset.speed) < 0.05 ? 'default' : 'outline'}
+                size="sm"
+                className="h-7 px-2 relative"
+              >
+                <Badge 
+                  variant="secondary" 
+                  className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-[10px] font-mono"
+                >
+                  {preset.key}
+                </Badge>
+                <span className="text-xs">{preset.label}</span>
+              </Button>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 flex-wrap">
           <Button
             onClick={onAddTask}
             variant="outline"
@@ -90,6 +122,12 @@ export function SimulationControls({
             <Brain size={18} weight="duotone" />
             <span>{isOptimizing ? 'Optimizing...' : 'AI Optimize'}</span>
           </Button>
+
+          <div className="ml-auto">
+            <span className="text-xs text-muted-foreground">
+              Press 1-5 for speed presets
+            </span>
+          </div>
         </div>
       </div>
     </Card>
