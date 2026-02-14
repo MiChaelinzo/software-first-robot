@@ -354,6 +354,61 @@ export const Warehouse3D = forwardRef<Warehouse3DHandle, Warehouse3DProps>(({
       cameraControlsRef.current.isPanning = false
     }
 
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const controls = cameraControlsRef.current
+      const panSpeed = 0.5
+      const rotateSpeed = 0.05
+
+      switch (e.key.toLowerCase()) {
+        case 'w':
+          const forwardZ = new THREE.Vector3(0, 0, 1)
+            .applyAxisAngle(new THREE.Vector3(0, 1, 0), controls.azimuthAngle)
+            .multiplyScalar(panSpeed)
+          controls.targetPosition.add(forwardZ)
+          break
+        case 's':
+          const backwardZ = new THREE.Vector3(0, 0, 1)
+            .applyAxisAngle(new THREE.Vector3(0, 1, 0), controls.azimuthAngle)
+            .multiplyScalar(-panSpeed)
+          controls.targetPosition.add(backwardZ)
+          break
+        case 'a':
+          const leftX = new THREE.Vector3(1, 0, 0)
+            .applyAxisAngle(new THREE.Vector3(0, 1, 0), controls.azimuthAngle)
+            .multiplyScalar(-panSpeed)
+          controls.targetPosition.add(leftX)
+          break
+        case 'd':
+          const rightX = new THREE.Vector3(1, 0, 0)
+            .applyAxisAngle(new THREE.Vector3(0, 1, 0), controls.azimuthAngle)
+            .multiplyScalar(panSpeed)
+          controls.targetPosition.add(rightX)
+          break
+        case 'arrowleft':
+          controls.azimuthAngle -= rotateSpeed
+          break
+        case 'arrowright':
+          controls.azimuthAngle += rotateSpeed
+          break
+        case 'arrowup':
+          controls.polarAngle = Math.max(0.1, controls.polarAngle - rotateSpeed)
+          break
+        case 'arrowdown':
+          controls.polarAngle = Math.min(Math.PI / 2 - 0.1, controls.polarAngle + rotateSpeed)
+          break
+        default:
+          return
+      }
+
+      const maxX = gridWidth
+      const maxZ = gridHeight
+      controls.targetPosition.x = Math.max(0, Math.min(maxX, controls.targetPosition.x))
+      controls.targetPosition.z = Math.max(0, Math.min(maxZ, controls.targetPosition.z))
+
+      e.preventDefault()
+      updateCameraPosition()
+    }
+
     const canvas = renderer.domElement
     canvas.addEventListener('mousedown', handleMouseDown)
     canvas.addEventListener('mousemove', handleMouseMove)
@@ -364,6 +419,7 @@ export const Warehouse3D = forwardRef<Warehouse3DHandle, Warehouse3DProps>(({
     canvas.addEventListener('touchstart', handleTouchStart)
     canvas.addEventListener('touchmove', handleTouchMove)
     canvas.addEventListener('touchend', handleTouchEnd)
+    window.addEventListener('keydown', handleKeyDown)
 
     const animate = () => {
       animationFrameRef.current = requestAnimationFrame(animate)
@@ -383,6 +439,7 @@ export const Warehouse3D = forwardRef<Warehouse3DHandle, Warehouse3DProps>(({
       canvas.removeEventListener('touchstart', handleTouchStart)
       canvas.removeEventListener('touchmove', handleTouchMove)
       canvas.removeEventListener('touchend', handleTouchEnd)
+      window.removeEventListener('keydown', handleKeyDown)
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current)
       }
