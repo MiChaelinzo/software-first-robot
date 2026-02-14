@@ -68,6 +68,13 @@ This is a sophisticated robotics simulation requiring real-time pathfinding algo
 - **Progression**: Analyze robot positions → Calculate zone congestion → Review historical patterns → Predict optimal speeds → Apply adaptive adjustments → Record results → Update learning model → Calculate efficiency gains
 - **Success criteria**: Measurable reduction in congestion over time, improved robot throughput, fewer collision events, positive efficiency gain percentage, smooth traffic flow in high-density zones
 
+### Heat Trail Visualization System
+- **Functionality**: Real-time visualization of historical robot paths with speed-based color coding and decay effects, plus traffic heat mapping showing high-frequency zones
+- **Purpose**: Provide visual insights into robot movement patterns, speed distribution, traffic hotspots, and system efficiency over time
+- **Trigger**: Continuous recording during robot movement with automatic decay and cleanup
+- **Progression**: Robot moves → Position recorded with speed and timestamp → Trail point added to history → Heat map cell updated → Decay applied over time → Visual overlay rendered with speed colors → Statistics calculated
+- **Success criteria**: Smooth trail rendering with accurate speed colors, heat map shows traffic patterns clearly, trails fade naturally over time, performance remains optimal with multiple trails active
+
 ## Edge Case Handling
 - **Robot Collision**: Robots detect proximity and pause/reroute to avoid collisions; congestion system learns from near-misses and adjusts speeds in high-traffic zones
 - **Unreachable Destination**: Task reassigned or marked as blocked if path cannot be found after multiple attempts
@@ -78,6 +85,9 @@ This is a sophisticated robotics simulation requiring real-time pathfinding algo
 - **High Congestion**: Adaptive learning system reduces speeds in congested zones and learns optimal traffic patterns over time
 - **Critical Priority Tasks**: System maintains higher speeds for critical tasks even in congested areas
 - **Learning Rate Adjustment**: System dynamically adjusts learning rate based on success metrics and collision avoidance performance
+- **Trail Memory Overflow**: Heat trail system automatically cleans up old trail points and heat map cells to maintain performance
+- **Multiple Active Trails**: System efficiently handles 10+ simultaneous robot trails with smooth rendering and minimal performance impact
+- **Heat Map Saturation**: Heat map normalizes intensity values to prevent oversaturation in heavily-trafficked zones
 
 ## Design Direction
 The design should evoke a sense of advanced technology and precision engineering - like stepping into a mission control center for an automated warehouse. It should feel professional, data-rich, and futuristic while maintaining clarity and usability. The interface should communicate intelligent automation, real-time monitoring, and cutting-edge robotics technology.
@@ -116,6 +126,10 @@ Animations should emphasize the mechanical precision and fluid intelligence of a
 - Robot status changes: Color transition over 300ms with subtle scale pulse (1.05x for 150ms)
 - Collision warnings: Urgent pulse at 500ms intervals with red accent
 - Success celebrations: Gentle confetti burst and green glow (600ms total)
+- Heat trail rendering: Smooth fade-in over 200ms with pathLength animation for line segments
+- Trail decay: Gradual opacity reduction over 5 seconds creating natural fade-out effect
+- Heat map cells: Emerge with 500ms fade-in and scale animation, blend mode creates layered depth
+- Speed color transitions: Instant color changes based on robot speed for immediate visual feedback
 
 ## Component Selection
 - **Components**: 
@@ -153,6 +167,10 @@ Animations should emphasize the mechanical precision and fluid intelligence of a
   - Warning for collision alerts
   - CheckCircle for completed tasks
   - Brain for AI suggestions
+  - Path for heat trail visualization toggle
+  - Fire for heat map overlay toggle
+  - Gauge for speed indicators
+  - MapPin for trail point markers
 
 - **Spacing**: 
   - Panel padding: p-6 for main containers, p-4 for nested cards

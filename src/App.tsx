@@ -10,6 +10,7 @@ import { CollisionMonitor, type CollisionEvent } from '@/components/CollisionMon
 import { CongestionHeatmap } from '@/components/CongestionHeatmap'
 import { AdaptiveLearningPanel } from '@/components/AdaptiveLearningPanel'
 import { VisualizationControls } from '@/components/VisualizationControls'
+import { HeatTrailStats } from '@/components/HeatTrailStats'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card } from '@/components/ui/card'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -23,6 +24,7 @@ import {
   generateRandomTask 
 } from '@/lib/simulation'
 import { CongestionLearningSystem } from '@/lib/congestion-learning'
+import { HeatTrailSystem } from '@/lib/heat-trail'
 import { AndroidLogo } from '@phosphor-icons/react'
 
 const GRID_WIDTH = 18
@@ -86,10 +88,20 @@ function App() {
   const [showCongestionZones, setShowCongestionZones] = useState(true)
   const [showRobotSpeeds, setShowRobotSpeeds] = useState(true)
   const [showSpeedIndicators, setShowSpeedIndicators] = useState(true)
+  const [showHeatTrails, setShowHeatTrails] = useState(true)
+  const [showHeatMap, setShowHeatMap] = useState(false)
 
   const congestionSystem = useMemo(() => new CongestionLearningSystem(GRID_WIDTH, GRID_HEIGHT, 3), [])
+  const heatTrailSystem = useMemo(() => new HeatTrailSystem(50, 5000, 1), [])
   const lastUpdateRef = useRef<number>(Date.now())
   const completionTimesRef = useRef<number[]>([])
+  const [heatTrailStats, setHeatTrailStats] = useState({
+    activeTrails: 0,
+    totalTrailPoints: 0,
+    heatMapCells: 0,
+    avgSpeed: 0,
+    hotspots: 0
+  })
 
   const safeRobots = robots || initialRobots
   const safeTasks = tasks || []
@@ -145,6 +157,8 @@ function App() {
       const updatedRobots = currentRobots.map(robot => {
         const adaptiveSpeed = congestionSystem.getAdaptiveSpeed(robot, currentRobots)
         robot.speed = adaptiveSpeed
+
+        heatTrailSystem.recordPosition(robot)
 
         const { robot: updatedRobot, metrics: robotMetrics } = updateRobotPosition(
           robot,
@@ -208,6 +222,9 @@ function App() {
       return updatedRobots
     })
 
+    heatTrailSystem.cleanup()
+    setHeatTrailStats(heatTrailSystem.getStats())
+
     setTasks((currentTasks = []) => {
       const updatedTasks = currentTasks.map(task => {
         if (task.status === 'assigned') {
@@ -251,7 +268,7 @@ function App() {
     })
 
     assignTasks()
-  }, [isRunning, speed, warehouse, assignTasks, setRobots, setTasks, setMetrics, congestionSystem, safeRobots])
+  }, [isRunning, speed, warehouse, assignTasks, setRobots, setTasks, setMetrics, congestionSystem, heatTrailSystem, safeRobots])
 
   useEffect(() => {
     if (!isRunning) return
@@ -290,6 +307,14 @@ function App() {
     setCollisionEvents([])
     completionTimesRef.current = []
     congestionSystem.reset()
+    heatTrailSystem.reset()
+    setHeatTrailStats({
+      activeTrails: 0,
+      totalTrailPoints: 0,
+      heatMapCells: 0,
+      avgSpeed: 0,
+      hotspots: 0
+    })
     toast.info('Simulation reset')
   }
 
@@ -381,9 +406,13 @@ Analyze this robotics system and provide 2-3 specific, actionable optimization s
                   showCongestionZones={showCongestionZones}
                   showRobotSpeeds={showRobotSpeeds}
                   showSpeedIndicators={showSpeedIndicators}
+                  showHeatTrails={showHeatTrails}
+                  showHeatMap={showHeatMap}
                   onToggleCongestionZones={setShowCongestionZones}
                   onToggleRobotSpeeds={setShowRobotSpeeds}
                   onToggleSpeedIndicators={setShowSpeedIndicators}
+                  onToggleHeatTrails={setShowHeatTrails}
+                  onToggleHeatMap={setShowHeatMap}
                 />
                 
                 <Card className="glass-panel p-6">
@@ -398,6 +427,11 @@ Analyze this robotics system and provide 2-3 specific, actionable optimization s
                         showCongestionZones={showCongestionZones}
                         showRobotSpeeds={showRobotSpeeds}
                         showSpeedIndicators={showSpeedIndicators}
+                        heatTrails={heatTrailSystem.getTrails(true)}
+                        heatMap={heatTrailSystem.getHeatMap()}
+                        showHeatTrails={showHeatTrails}
+                        showHeatMap={showHeatMap}
+                        getTrailOpacity={(point) => heatTrailSystem.getOpacity(point)}
                       />
                     </div>
                   </ScrollArea>
@@ -444,15 +478,23 @@ Analyze this robotics system and provide 2-3 specific, actionable optimization s
                 efficiencyGain={safeMetrics.efficiencyGain}
               />
 
+              <HeatTrailStats
+                activeTrails={heatTrailStats.activeTrails}
+                totalTrailPoints={heatTrailStats.totalTrailPoints}
+                heatMapCells={heatTrailStats.heatMapCells}
+                avgSpeed={heatTrailStats.avgSpeed}
+                hotspots={heatTrailStats.hotspots}
+              />
+            </div>
+
+            <div className="grid lg:grid-cols-2 gap-6">
               <CongestionHeatmap
                 zones={congestionSystem.getZones()}
                 gridWidth={GRID_WIDTH}
                 gridHeight={GRID_HEIGHT}
                 zoneSize={3}
               />
-            </div>
 
-            <div className="grid lg:grid-cols-2 gap-6">
               <Card className="glass-panel p-6">
                 <h3 className="text-lg font-semibold mb-4">System Overview</h3>
                 <div className="space-y-3 text-sm">

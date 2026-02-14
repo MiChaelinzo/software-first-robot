@@ -1,8 +1,10 @@
 import { motion } from 'framer-motion'
 import type { Robot, WarehouseCell, Task } from '@/lib/types'
 import type { CongestionZone } from '@/lib/congestion-learning'
+import type { TrailPoint, HeatMapCell } from '@/lib/heat-trail'
 import { Lightning, Package, Circle } from '@phosphor-icons/react'
 import { SpeedOverlay } from './SpeedOverlay'
+import { HeatTrailOverlay } from './HeatTrailOverlay'
 
 interface WarehouseGridProps {
   warehouse: WarehouseCell[][]
@@ -13,6 +15,11 @@ interface WarehouseGridProps {
   showCongestionZones?: boolean
   showRobotSpeeds?: boolean
   showSpeedIndicators?: boolean
+  heatTrails?: Map<string, TrailPoint[]>
+  heatMap?: HeatMapCell[]
+  showHeatTrails?: boolean
+  showHeatMap?: boolean
+  getTrailOpacity?: (point: TrailPoint) => number
 }
 
 export function WarehouseGrid({ 
@@ -23,7 +30,12 @@ export function WarehouseGrid({
   congestionZones = [],
   showCongestionZones = false,
   showRobotSpeeds = false,
-  showSpeedIndicators = false
+  showSpeedIndicators = false,
+  heatTrails = new Map(),
+  heatMap = [],
+  showHeatTrails = false,
+  showHeatMap = false,
+  getTrailOpacity = () => 1
 }: WarehouseGridProps) {
   const width = warehouse[0]?.length || 0
   const height = warehouse.length
@@ -95,6 +107,17 @@ export function WarehouseGrid({
         showZones={showCongestionZones}
         showRobotSpeeds={showRobotSpeeds}
         showSpeedIndicators={showSpeedIndicators}
+      />
+
+      <HeatTrailOverlay
+        trails={heatTrails}
+        heatMap={heatMap}
+        cellSize={cellSize}
+        width={width * cellSize}
+        height={height * cellSize}
+        showTrails={showHeatTrails}
+        showHeatMap={showHeatMap}
+        getOpacity={getTrailOpacity}
       />
 
       {tasks

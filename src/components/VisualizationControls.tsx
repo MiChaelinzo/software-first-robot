@@ -1,25 +1,33 @@
 import { Card } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
-import { Eye, Gauge, ChartBar, ArrowDown, ArrowUp, Warning } from '@phosphor-icons/react'
+import { Eye, Gauge, ChartBar, ArrowDown, ArrowUp, Warning, Path, Fire } from '@phosphor-icons/react'
 import { Separator } from '@/components/ui/separator'
 
 interface VisualizationControlsProps {
   showCongestionZones: boolean
   showRobotSpeeds: boolean
   showSpeedIndicators: boolean
+  showHeatTrails: boolean
+  showHeatMap: boolean
   onToggleCongestionZones: (value: boolean) => void
   onToggleRobotSpeeds: (value: boolean) => void
   onToggleSpeedIndicators: (value: boolean) => void
+  onToggleHeatTrails: (value: boolean) => void
+  onToggleHeatMap: (value: boolean) => void
 }
 
 export function VisualizationControls({
   showCongestionZones,
   showRobotSpeeds,
   showSpeedIndicators,
+  showHeatTrails,
+  showHeatMap,
   onToggleCongestionZones,
   onToggleRobotSpeeds,
-  onToggleSpeedIndicators
+  onToggleSpeedIndicators,
+  onToggleHeatTrails,
+  onToggleHeatMap
 }: VisualizationControlsProps) {
   return (
     <Card className="glass-panel p-5">
@@ -68,6 +76,36 @@ export function VisualizationControls({
             id="speed-indicators"
             checked={showSpeedIndicators}
             onCheckedChange={onToggleSpeedIndicators}
+          />
+        </div>
+
+        <Separator className="my-2" />
+
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Path size={16} className="text-muted-foreground" />
+            <Label htmlFor="heat-trails" className="text-sm cursor-pointer">
+              Heat Trails
+            </Label>
+          </div>
+          <Switch
+            id="heat-trails"
+            checked={showHeatTrails}
+            onCheckedChange={onToggleHeatTrails}
+          />
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Fire size={16} className="text-muted-foreground" />
+            <Label htmlFor="heat-map" className="text-sm cursor-pointer">
+              Heat Map
+            </Label>
+          </div>
+          <Switch
+            id="heat-map"
+            checked={showHeatMap}
+            onCheckedChange={onToggleHeatMap}
           />
         </div>
       </div>
