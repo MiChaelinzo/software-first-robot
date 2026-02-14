@@ -17,6 +17,7 @@ interface CameraControls {
   distance: number
   targetPosition: THREE.Vector3
   isDragging: boolean
+  isPanning: boolean
   lastMouseX: number
   lastMouseY: number
 }
@@ -51,6 +52,7 @@ export const Warehouse3D = forwardRef<Warehouse3DHandle, Warehouse3DProps>(({
     distance: Math.max(gridWidth, gridHeight) * 1.8,
     targetPosition: new THREE.Vector3(gridWidth / 2, 0, gridHeight / 2),
     isDragging: false,
+    isPanning: false,
     lastMouseX: 0,
     lastMouseY: 0
   })
@@ -218,20 +220,45 @@ export const Warehouse3D = forwardRef<Warehouse3DHandle, Warehouse3DProps>(({
 
     const handleMouseDown = (e: MouseEvent) => {
       const controls = cameraControlsRef.current
-      controls.isDragging = true
+      if (e.button === 0) {
+        controls.isDragging = true
+      } else if (e.button === 1 || e.button === 2) {
+        e.preventDefault()
+        controls.isPanning = true
+      }
       controls.lastMouseX = e.clientX
       controls.lastMouseY = e.clientY
     }
 
     const handleMouseMove = (e: MouseEvent) => {
       const controls = cameraControlsRef.current
-      if (!controls.isDragging) return
+      if (!controls.isDragging && !controls.isPanning) return
 
       const deltaX = e.clientX - controls.lastMouseX
       const deltaY = e.clientY - controls.lastMouseY
 
-      controls.azimuthAngle -= deltaX * 0.005
-      controls.polarAngle = Math.max(0.1, Math.min(Math.PI / 2 - 0.1, controls.polarAngle - deltaY * 0.005))
+      if (controls.isPanning) {
+        const panSpeed = 0.02
+        const right = new THREE.Vector3()
+        const up = new THREE.Vector3(0, 1, 0)
+        
+        camera.getWorldDirection(new THREE.Vector3())
+        right.crossVectors(camera.up, new THREE.Vector3().subVectors(camera.position, controls.targetPosition).normalize())
+        right.normalize()
+        
+        const panX = right.clone().multiplyScalar(-deltaX * panSpeed)
+        const panZ = new THREE.Vector3(0, 0, 1).applyAxisAngle(new THREE.Vector3(0, 1, 0), controls.azimuthAngle).multiplyScalar(deltaY * panSpeed)
+        
+        controls.targetPosition.add(panX).add(panZ)
+        
+        const maxX = gridWidth
+        const maxZ = gridHeight
+        controls.targetPosition.x = Math.max(0, Math.min(maxX, controls.targetPosition.x))
+        controls.targetPosition.z = Math.max(0, Math.min(maxZ, controls.targetPosition.z))
+      } else if (controls.isDragging) {
+        controls.azimuthAngle -= deltaX * 0.005
+        controls.polarAngle = Math.max(0.1, Math.min(Math.PI / 2 - 0.1, controls.polarAngle - deltaY * 0.005))
+      }
 
       controls.lastMouseX = e.clientX
       controls.lastMouseY = e.clientY
@@ -241,6 +268,11 @@ export const Warehouse3D = forwardRef<Warehouse3DHandle, Warehouse3DProps>(({
 
     const handleMouseUp = () => {
       cameraControlsRef.current.isDragging = false
+      cameraControlsRef.current.isPanning = false
+    }
+
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault()
     }
 
     const handleWheel = (e: WheelEvent) => {
@@ -260,6 +292,11 @@ export const Warehouse3D = forwardRef<Warehouse3DHandle, Warehouse3DProps>(({
         controls.isDragging = true
         controls.lastMouseX = e.touches[0].clientX
         controls.lastMouseY = e.touches[0].clientY
+      } else if (e.touches.length === 2) {
+        const controls = cameraControlsRef.current
+        controls.isPanning = true
+        controls.lastMouseX = (e.touches[0].clientX + e.touches[1].clientX) / 2
+        controls.lastMouseY = (e.touches[0].clientY + e.touches[1].clientY) / 2
       }
     }
 
@@ -278,11 +315,43 @@ export const Warehouse3D = forwardRef<Warehouse3DHandle, Warehouse3DProps>(({
         controls.lastMouseY = e.touches[0].clientY
 
         updateCameraPosition()
+      } else if (e.touches.length === 2) {
+        const controls = cameraControlsRef.current
+        if (!controls.isPanning) return
+
+        const centerX = (e.touches[0].clientX + e.touches[1].clientX) / 2
+        const centerY = (e.touches[0].clientY + e.touches[1].clientY) / 2
+        
+        const deltaX = centerX - controls.lastMouseX
+        const deltaY = centerY - controls.lastMouseY
+
+        const panSpeed = 0.02
+        const right = new THREE.Vector3()
+        
+        camera.getWorldDirection(new THREE.Vector3())
+        right.crossVectors(camera.up, new THREE.Vector3().subVectors(camera.position, controls.targetPosition).normalize())
+        right.normalize()
+        
+        const panX = right.clone().multiplyScalar(-deltaX * panSpeed)
+        const panZ = new THREE.Vector3(0, 0, 1).applyAxisAngle(new THREE.Vector3(0, 1, 0), controls.azimuthAngle).multiplyScalar(deltaY * panSpeed)
+        
+        controls.targetPosition.add(panX).add(panZ)
+        
+        const maxX = gridWidth
+        const maxZ = gridHeight
+        controls.targetPosition.x = Math.max(0, Math.min(maxX, controls.targetPosition.x))
+        controls.targetPosition.z = Math.max(0, Math.min(maxZ, controls.targetPosition.z))
+
+        controls.lastMouseX = centerX
+        controls.lastMouseY = centerY
+
+        updateCameraPosition()
       }
     }
 
     const handleTouchEnd = () => {
       cameraControlsRef.current.isDragging = false
+      cameraControlsRef.current.isPanning = false
     }
 
     const canvas = renderer.domElement
@@ -291,6 +360,7 @@ export const Warehouse3D = forwardRef<Warehouse3DHandle, Warehouse3DProps>(({
     canvas.addEventListener('mouseup', handleMouseUp)
     canvas.addEventListener('mouseleave', handleMouseUp)
     canvas.addEventListener('wheel', handleWheel, { passive: false })
+    canvas.addEventListener('contextmenu', handleContextMenu)
     canvas.addEventListener('touchstart', handleTouchStart)
     canvas.addEventListener('touchmove', handleTouchMove)
     canvas.addEventListener('touchend', handleTouchEnd)
@@ -309,6 +379,7 @@ export const Warehouse3D = forwardRef<Warehouse3DHandle, Warehouse3DProps>(({
       canvas.removeEventListener('mouseup', handleMouseUp)
       canvas.removeEventListener('mouseleave', handleMouseUp)
       canvas.removeEventListener('wheel', handleWheel)
+      canvas.removeEventListener('contextmenu', handleContextMenu)
       canvas.removeEventListener('touchstart', handleTouchStart)
       canvas.removeEventListener('touchmove', handleTouchMove)
       canvas.removeEventListener('touchend', handleTouchEnd)

@@ -2,7 +2,7 @@ import { Card } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Button } from '@/components/ui/button'
-import { Cube, Path, GridFour, Mouse, ArrowsOutCardinal, ArrowCounterClockwise } from '@phosphor-icons/react'
+import { Cube, Path, GridFour, Mouse, ArrowsOutCardinal, ArrowCounterClockwise, Hand } from '@phosphor-icons/react'
 
 interface View3DControlsProps {
   showPaths: boolean
@@ -73,7 +73,11 @@ export function View3DControls({
           <div className="text-xs text-muted-foreground space-y-2">
             <div className="flex items-center gap-2">
               <Mouse size={14} weight="duotone" className="text-accent" />
-              <span>Drag to rotate camera</span>
+              <span>Left drag to rotate camera</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Hand size={14} weight="duotone" className="text-accent" />
+              <span>Right drag to pan view</span>
             </div>
             <div className="flex items-center gap-2">
               <ArrowsOutCardinal size={14} weight="duotone" className="text-accent" />
