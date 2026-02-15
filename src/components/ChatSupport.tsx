@@ -14,54 +14,54 @@ import {
   X
 } from '@phosphor-icons/react'
 
-export type ChatMessage = {
   id: string
-  role: 'user' | 'assistant'
-  content: string
-  timestamp: number
+  content: s
 }
-
-const DEFAULT_SUGGESTIONS = [
-  { id: '1', text: 'Explain the simulation metrics', category: 'question' },
-  { id: '2', text: 'Show me the robot status', category: 'question' },
-  { id: '3', text: 'How do I optimize performance?', category: 'question' }
+const DEFAULT_SUG
+  { id: '2', text: 
 ]
 
-export function ChatSupport() {
-  const [isOpen, setIsOpen] = useState(false)
-  const [messages, setMessages] = useState<ChatMessage[]>([])
-  const [inputValue, setInputValue] = useState('')
+  const [messages, setMessage
   const [isTyping, setIsTyping] = useState(false)
-  const [unreadCount, setUnreadCount] = useState(0)
   const [suggestions, setSuggestions] = useState(DEFAULT_SUGGESTIONS)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    if (isOpen) {
-      setUnreadCount(0)
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-    }
+ 
+
   }, [isOpen, messages])
-
-  const generateAIResponse = async (userMessage: string, conversationHistory: ChatMessage[]) => {
-    try {
-      const contextMessages = conversationHistory.slice(-3).map(m => 
-        `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`
+  const generateAIResponse = async (userMessa
+      const contextMessages = conversationHistory.slice(-3).m
       ).join('\n')
+      const promptText = `You are a helpful AI as
 
-      const promptText = `You are a helpful AI assistant for an autonomous warehouse robotics simulation platform. 
-You help users understand the simulation, explain features, and provide guidance.
-
-Previous conversation:
 ${contextMessages}
-
 User message: "${userMessage}"
 
-Provide a helpful, concise response (2-3 sentences max).`
+      const respons
+    } catch (erro
+      return "I can hel
+  }
+  con
 
-      const response = await window.spark.llm(promptText, 'gpt-4o-mini')
-      return response
-    } catch (error) {
+
+      const response = await window.spark.llm(promptText, 'gpt-4o-mini', true)
+        c
+          return parsed.suggestions.map((s: any, idx: number) => ({
+            text: s.text,
+          }))
+
+      console.error('Failed to generate suggestions', error)
+
+
+  const handleSubmit =
+
+
+      id: `msg-${Date.now()}`,
+
+    }
+
+    setIsTyping(true)
+    setTimeout(async 
+
       console.error('AI Error:', error)
       return "I can help you with that! The simulation shows real-time warehouse robotics with AI-powered path planning and collision avoidance. Try asking about specific metrics or features you'd like to understand better."
     }
@@ -172,7 +172,7 @@ Provide a helpful, concise response (2-3 sentences max).`
             </Button>
           )}
           <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)} className="h-8 w-8">
-            <X size={20} />
+          )}
           </Button>
         </div>
       </div>
@@ -199,7 +199,7 @@ Provide a helpful, concise response (2-3 sentences max).`
                   'max-w-[80%] space-y-2'
                 )}
               >
-                <div
+
                   className={cn(
                     'p-3 rounded-2xl text-sm',
                     msg.role === 'user' 
@@ -222,7 +222,7 @@ Provide a helpful, concise response (2-3 sentences max).`
           {isTyping && (
             <div className="flex justify-start">
               <div className="bg-muted p-3 rounded-2xl">
-                <div className="flex items-center gap-2 text-muted-foreground">
+
                   <div className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                   <div className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                   <div className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
@@ -244,11 +244,11 @@ Provide a helpful, concise response (2-3 sentences max).`
                 variant="outline" 
                 className="cursor-pointer hover:bg-accent/10 transition-colors"
                 onClick={() => handleSuggestionClick(suggestion)}
-              >
+
                 {suggestion.text}
               </Badge>
             ))}
-          </div>
+
         )}
 
         <form onSubmit={handleSubmit} className="flex gap-2">
@@ -263,6 +263,6 @@ Provide a helpful, concise response (2-3 sentences max).`
           </Button>
         </form>
       </div>
-    </Card>
+
   )
-}
+
