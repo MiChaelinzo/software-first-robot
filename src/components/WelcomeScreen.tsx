@@ -1,7 +1,8 @@
 import { useState } from 'react'
+import { motion } from 'framer-motion'
+import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
-import { Tabs, TabsContent, TabsList, TabsTri
+import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -13,93 +14,103 @@ import {
   SpinnerGap,
   Lightning,
   Graph,
-  Envelope
-  AndroidL
-import 
-interface We
-  onGetStarted: (
+  EnvelopeSimple,
+  AndroidLogo,
+  User,
+  Lock,
+  Buildings,
+  Sparkle,
+  Network
+} from '@phosphor-icons/react'
 
-  const [show
-  const [isLoading, setIsLoadi
-import { motion } from 'framer-motion'
+interface WelcomeScreenProps {
+  onGetStarted: () => void
+  onUserAuthenticated?: (userData: any) => void
+}
 
+export default function WelcomeScreen({ onGetStarted, onUserAuthenticated }: WelcomeScreenProps) {
+  const [showAuth, setShowAuth] = useState(false)
+  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin')
+  const [isLoading, setIsLoading] = useState(false)
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+    name: '',
     organization: ''
+  })
 
+  const features = [
     {
- 
-
-      title: 'Adaptive Learning',
-      icon: Sparkle
-    {
-      description: 'Real-time simulation and what-i
+      title: 'Real-time Simulation',
+      icon: Lightning,
+      description: 'Watch autonomous robots navigate your warehouse in real-time with physics-based movement'
     },
-      title: '
-      icon: Netwo
     {
-      description: '
-    
-
-      icon: ChartBar
+      title: 'AI-Powered Optimization',
+      icon: Brain,
+      description: 'Machine learning algorithms optimize routes, predict maintenance, and improve efficiency'
+    },
+    {
+      title: 'Advanced Analytics',
+      icon: ChartBar,
+      description: 'Comprehensive metrics and visualizations for data-driven decision making'
+    },
+    {
+      title: 'Adaptive Learning',
+      icon: Sparkle,
+      description: 'System learns from traffic patterns and adapts routing strategies automatically'
+    },
+    {
+      title: 'Digital Twin',
+      icon: Graph,
+      description: 'Real-time simulation and what-if analysis for testing scenarios before deployment'
+    },
+    {
+      title: 'Multi-Warehouse Network',
+      icon: Network,
+      description: 'Coordinate robot fleets across multiple warehouses with load balancing'
+    }
   ]
-  const handleAuth = async (e: React.F
+
+  const handleAuth = async (e: React.FormEvent) => {
+    e.preventDefault()
     setIsLoading(true)
+    
     try {
+      await new Promise(resolve => setTimeout(resolve, 1500))
       
-     
-      }
-      await window.spark?.kv?.set('user_session', mockUser)
-      if (onUserAut
-      
-     
-      console.error('Auth er
-      setIsLoading(false)
-  }
-  retu
-     
-        top: 0,
-        right: 0,
-        backgroundI
-      
-     
-      }} />
-      <motion.div
-          positio
-      
-     
-          left: '10%',
-        }}
-          x: [0, 30,
-     
-   
-
-      />
-      <motion.div
-          position: 'a
-
-         
-          right: '10%',
-        }}
+      const mockUser = {
+        email: formData.email,
         name: formData.name || formData.email.split('@')[0],
         organization: formData.organization || 'Demo Warehouse',
         authenticated: true
       }
-
-      />
-
+      
+      await window.spark?.kv?.set('user_session', mockUser)
+      
       if (onUserAuthenticated) {
         onUserAuthenticated(mockUser)
       }
-
+      
       onGetStarted()
-                style
-                  width: '120px',
-               
-                  alignIt
+    } catch (error) {
+      console.error('Auth error:', error)
+    } finally {
+      setIsLoading(false)
     }
-   
+  }
 
   return (
-                  ]
+    <div style={{
+      minHeight: '100vh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '24px',
+      position: 'relative',
+      overflow: 'hidden',
+      background: 'linear-gradient(135deg, oklch(0.25 0.02 265) 0%, oklch(0.20 0.03 265) 100%)'
+    }}>
       <div style={{
         position: 'absolute',
         top: 0,
@@ -114,49 +125,55 @@ import { motion } from 'framer-motion'
         width: '100%'
       }} />
 
-                <
-                
-                </Badge>
-                  <Cube s
-                </Badge>
-            </div>
-            <div className="gr
-                <moti
-                  init
-                  transition={
-          
+      <motion.div
+        style={{
+          position: 'absolute',
+          top: '20%',
+          left: '10%',
+        }}
         animate={{
           x: [0, 30, 0],
           y: [0, -20, 0]
-
-              <Button
+        }}
+        transition={{
           duration: 20,
-              >
-                Launch Simu
-          
-      />
+          repeat: Infinity,
+          ease: 'easeInOut'
+        }}
+      >
+        <div style={{
+          width: '300px',
+          height: '300px',
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, oklch(0.55 0.25 265 / 0.2) 0%, transparent 70%)',
+          filter: 'blur(60px)'
+        }} />
+      </motion.div>
 
       <motion.div
         style={{
-            </div>
-        </motion.div>
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          exit={{ opacity: 0, 
-          <Card classNam
-              className
-              animate={{ opaci
+          position: 'absolute',
+          bottom: '20%',
+          right: '10%',
         }}
-              </di
+        animate={{
           x: [0, -30, 0],
-              </p>
+          y: [0, 20, 0]
         }}
         transition={{
-                <TabsTr
+          duration: 25,
           repeat: Infinity,
-                <TabsConten
+          ease: 'easeInOut'
         }}
-      />
+      >
+        <div style={{
+          width: '400px',
+          height: '400px',
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, oklch(0.75 0.20 145 / 0.15) 0%, transparent 70%)',
+          filter: 'blur(80px)'
+        }} />
+      </motion.div>
 
       {!showAuth ? (
         <motion.div
@@ -167,7 +184,7 @@ import { motion } from 'framer-motion'
         >
           <Card className="glass-panel p-8 lg:p-12">
             <div className="text-center space-y-6 mb-12">
-}
+              <motion.div
                 style={{ 
                   background: 'linear-gradient(135deg, oklch(0.55 0.25 265) 0%, oklch(0.75 0.20 145) 100%)',
                   width: '120px',
@@ -197,15 +214,16 @@ import { motion } from 'framer-motion'
 
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
-
+                animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-
+              >
                 <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold tracking-tight mb-4">
                   Autonomous Warehouse
                 </h1>
                 <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto">
                   Advanced robotics simulation platform with AI-powered optimization, real-time analytics, and multi-warehouse coordination
-
+                </p>
+              </motion.div>
 
               <div className="flex items-center justify-center gap-3 flex-wrap">
                 <Badge variant="secondary" className="px-4 py-2 text-sm">
@@ -304,7 +322,7 @@ import { motion } from 'framer-motion'
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                       />
-
+                    </div>
                   </div>
 
                   <div className="space-y-2">
