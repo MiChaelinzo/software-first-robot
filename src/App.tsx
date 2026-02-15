@@ -1,6 +1,10 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useKV } from '@github/spark/hooks'
 import { Toaster, toast } from 'sonner'
+import { WelcomeScreen } from '@/components/WelcomeScreen'
+import { APIIntegrationPanel } from '@/components/APIIntegrationPanel'
+import { UserProfileButton } from '@/components/UserProfileButton'
+import { CloudSyncPanel } from '@/components/CloudSyncPanel'
 import { WarehouseGrid } from '@/components/WarehouseGrid'
 import { RobotStatusCard } from '@/components/RobotStatusCard'
 import { MetricsDashboard } from '@/components/MetricsDashboard'
@@ -116,6 +120,8 @@ const initialMetrics: PerformanceMetrics = {
 }
 
 function App() {
+  const [showWelcome, setShowWelcome] = useKV<boolean>('show_welcome', true)
+  const [currentUser, setCurrentUser] = useKV<any>('user_session', null)
   const [isRunning, setIsRunning] = useState(false)
   const [speed, setSpeed] = useState(1)
   const [warehouse] = useState(() => createWarehouse(GRID_WIDTH, GRID_HEIGHT))
@@ -1135,6 +1141,10 @@ Analyze this robotics system and provide 2-3 specific, actionable optimization s
     if (data.robots) setRobots(data.robots)
     if (data.tasks) setTasks(data.tasks)
     if (data.metrics) setMetrics(data.metrics)
+    
+    toast.success('Data imported from API', {
+      description: 'External data has been loaded into the simulation'
+    })
   }
 
   const handleCreateWhatIf = (modifications: any) => {
@@ -1244,6 +1254,39 @@ Analyze this robotics system and provide 2-3 specific, actionable optimization s
     return () => clearInterval(interval)
   }, [multiWarehouseSystem])
 
+  const handleUserAuthenticated = (userData: any) => {
+    setCurrentUser(userData)
+    toast.success('Welcome!', {
+      description: `Signed in as ${userData.name}`
+    })
+  }
+
+  const handleGetStarted = () => {
+    setShowWelcome(false)
+  }
+
+  useEffect(() => {
+    const checkSession = async () => {
+      const session = await window.spark.kv.get('user_session')
+      if (session) {
+        setCurrentUser(session)
+        setShowWelcome(false)
+      }
+    }
+    if (showWelcome) {
+      checkSession()
+    }
+  }, [showWelcome, setCurrentUser, setShowWelcome])
+
+  if (showWelcome) {
+    return (
+      <WelcomeScreen 
+        onGetStarted={handleGetStarted}
+        onUserAuthenticated={handleUserAuthenticated}
+      />
+    )
+  }
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <DynamicBackground theme={backgroundTheme || 'circuit-board'} />
@@ -1269,6 +1312,14 @@ Analyze this robotics system and provide 2-3 specific, actionable optimization s
               </p>
             </div>
           </div>
+          <UserProfileButton 
+            user={currentUser} 
+            onSignOut={async () => {
+              await window.spark.kv.delete('user_session')
+              setCurrentUser(null)
+              setShowWelcome(true)
+            }}
+          />
         </header>
 
         <SimulationControls
@@ -1602,6 +1653,19 @@ Analyze this robotics system and provide 2-3 specific, actionable optimization s
           </TabsContent>
 
           <TabsContent value="management" className="space-y-6">
+            <div className="grid lg:grid-cols-2 gap-6">
+              <APIIntegrationPanel
+                onDataImported={handleImportData}
+                isRunning={isRunning}
+              />
+              <CloudSyncPanel
+                robots={safeRobots}
+                tasks={safeTasks}
+                metrics={safeMetrics}
+                onRestore={handleImportData}
+              />
+            </div>
+
             <div className="grid lg:grid-cols-3 gap-6">
               <ScenarioGenerator
                 onApplyScenario={handleScenarioApply}

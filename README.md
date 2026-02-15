@@ -2,7 +2,7 @@
 
 **AI-Powered Multi-Warehouse Robotics Simulation Platform**
 
-A production-grade, enterprise-scale simulation system for autonomous warehouse robotics featuring advanced AI decision-making, real-time collision avoidance, multi-warehouse networking, voice control, and comprehensive analytics.
+A production-grade, enterprise-scale simulation system for autonomous warehouse robotics featuring advanced AI decision-making, real-time collision avoidance, multi-warehouse networking, voice control, comprehensive analytics, **welcome screen authentication, and full API integration**.
 
 [![Built with React](https://img.shields.io/badge/React-19.2-61dafb?logo=react)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178c6?logo=typescript)](https://www.typescriptlang.org/)
@@ -13,7 +13,7 @@ A production-grade, enterprise-scale simulation system for autonomous warehouse 
 
 ## 🎯 Overview
 
-This simulation platform demonstrates a fully autonomous warehouse robotics system with 10+ robots operating in a coordinated fleet across multiple warehouse facilities. The system showcases real-world applications of AI in logistics, including adaptive learning, predictive analytics, swarm intelligence, and energy optimization.
+This simulation platform demonstrates a fully autonomous warehouse robotics system with 10+ robots operating in a coordinated fleet across multiple warehouse facilities. The system showcases real-world applications of AI in logistics, including adaptive learning, predictive analytics, swarm intelligence, energy optimization, **user authentication, and external API integration for enterprise deployments**.
 
 **Track Alignment:** Autonomous Robotics Control in Simulation (Track 1)
 
@@ -27,6 +27,9 @@ This simulation platform demonstrates a fully autonomous warehouse robotics syst
 - **🤝 Swarm Intelligence:** Emergent behavior detection and collaborative tasking
 - **⚡ Energy Management:** Battery optimization and charging station analytics
 - **🔮 Digital Twin:** What-if scenario analysis and system simulation
+- **👤 User Authentication:** Welcome screen with sign-in/sign-up functionality
+- **🔌 API Integration:** Connect external data sources (REST, Webhooks, Databases)
+- **☁️ Cloud Sync:** Automatic backup and restore of simulation states
 
 ---
 
@@ -34,10 +37,31 @@ This simulation platform demonstrates a fully autonomous warehouse robotics syst
 
 ### Launch the Simulation
 
-1. **Start the application** (if not already running)
-2. **Click the Play button** in the Simulation Controls
+1. **Welcome Screen:** Choose "Quick Start" for guest access or "Sign In/Sign Up" for authenticated sessions
+2. **Start the application** - Click the Play button in the Simulation Controls
 3. **Watch autonomous robots** navigate and complete tasks
 4. **Try voice commands** by switching to the "Voice Control" tab
+5. **Connect APIs** in the Management tab for external data integration
+
+### User Authentication
+
+**Sign In:**
+- Navigate to the welcome screen
+- Enter your credentials
+- Access personalized settings and cloud sync
+
+**Quick Start (Guest):**
+- Click "Quick Start" to enter immediately
+- Limited features (no cloud sync)
+- Perfect for demos and testing
+
+### API Integration
+
+**Connect External Data Sources:**
+1. Go to Management tab → API Integration
+2. Add a new connection (REST API, Webhook, Database, Cloud Storage)
+3. Test the connection
+4. Sync data to import robots, tasks, and metrics
 
 ### First Voice Commands
 
@@ -224,6 +248,86 @@ The system monitors fleet-wide coordination and detects:
 
 Intelligent power management across the fleet:
 
+---
+
+## 🔐 Authentication & User Management
+
+### Welcome Screen
+
+**First-Time Experience:**
+- Beautiful animated welcome screen with feature highlights
+- Quick start option for immediate access (guest mode)
+- Sign in/sign up for authenticated sessions
+- GitHub user integration for seamless login
+
+**User Profiles:**
+- Personalized settings and preferences
+- Session management with persistent login
+- Organization/team tracking
+- User profile dropdown in header
+- Secure sign-out functionality
+
+**Benefits of Authentication:**
+- Cloud sync and backup access
+- Saved API connections
+- Personalized dashboard
+- Collaboration features (future)
+
+---
+
+## 🔌 API Integration System
+
+### External Data Sources
+
+**Supported Connection Types:**
+- **REST APIs:** Standard HTTP endpoints for data exchange
+- **Webhooks:** Real-time event notifications
+- **Databases:** Direct database connections (PostgreSQL, MySQL, etc.)
+- **Cloud Storage:** AWS S3, Azure Blob, Google Cloud Storage
+
+**Connection Management:**
+- Add unlimited API connections
+- Test connectivity before syncing
+- Secure API key storage
+- Connection status monitoring
+- Import/export connection configurations
+
+**Data Sync Features:**
+- Manual sync on-demand
+- Automatic periodic sync
+- Progress tracking with visual feedback
+- Import robots, tasks, and metrics from external sources
+- Error handling and retry logic
+
+**Example Use Cases:**
+- Import robot configurations from ERP systems
+- Sync task queues from warehouse management software
+- Export performance metrics to analytics platforms
+- Connect to IoT device management systems
+
+### Cloud Sync & Backup
+
+**Automatic Backups:**
+- Save simulation state to cloud storage
+- Auto-sync every 5 minutes (configurable)
+- Keep up to 10 backup snapshots
+- One-click restore from any backup
+- Progress indicator for sync operations
+
+**Backup Contents:**
+- Complete robot fleet state
+- All active and pending tasks
+- Performance metrics and history
+- Configuration and settings
+
+**Restore Functionality:**
+- Browse backup history
+- Restore to any previous state
+- Preview backup details before restoring
+- Delete old backups to free space
+
+---
+
 **Energy Profiles:**
 - Per-robot consumption rates
 - Charging efficiency scores
@@ -374,7 +478,7 @@ Visual Updates (2D/3D/Analytics)
 3. **Multi-Warehouse** - Network map and transfers
 4. **Analytics** - Performance metrics and graphs
 5. **AI Systems** - ML predictions and digital twin
-6. **Management** - Fleet control and scenarios
+6. **Management** - Fleet control, API integration, cloud sync, and scenarios
 7. **Voice Control** - Voice commands and settings
 
 ### Simulation Controls
@@ -383,7 +487,22 @@ Visual Updates (2D/3D/Analytics)
 **Stop Button** - Reset to initial state  
 **Speed Slider** - Adjust simulation speed (0.5x-5x)  
 **Add Task Button** - Generate a new warehouse task  
-**AI Optimize Button** - Get AI recommendations
+**AI Optimize Button** - Get AI recommendations  
+**User Profile** - Access settings, view session info, sign out
+
+### Management Features
+
+**API Integration Tab:**
+- Add and manage external connections
+- Test connectivity
+- Sync data from REST APIs, webhooks, databases
+- Import/export connection configurations
+
+**Cloud Sync Tab:**
+- Backup simulation state to cloud
+- Enable auto-sync for periodic backups
+- Browse and restore from backup history
+- Monitor sync progress in real-time
 
 ### Visualization Toggles
 
