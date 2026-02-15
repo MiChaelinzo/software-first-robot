@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useKV } from '@github/spark/hooks'
 import { Toaster, toast } from 'sonner'
-import { WelcomeScreen } from '@/components/WelcomeScreen'
+import WelcomeScreen from '@/components/WelcomeScreen'
 import { APIIntegrationPanel } from '@/components/APIIntegrationPanel'
 import { UserProfileButton } from '@/components/UserProfileButton'
 import { CloudSyncPanel } from '@/components/CloudSyncPanel'

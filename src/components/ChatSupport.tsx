@@ -6,24 +6,20 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
 import {
   ChatCircleDots,
-  X,
   PaperPlaneRight,
-  Paperclip,
-  Image as ImageIcon,
-  FileText,
-  VideoCamera,
-  Robot,
-  User,
   Trash,
-  Sparkle,
+  Image as ImageIcon,
   Microphone,
-  MicrophoneSlash,
-  SpeakerHigh,
-  Stop
+  VideoCamera,
+  X,
+  Sparkle,
+  Paperclip,
+  FileText,
+  SpeakerHigh
 } from '@phosphor-icons/react'
-import { cn } from '@/lib/utils'
 
 export type ChatMessage = {
   id: string
@@ -31,7 +27,6 @@ export type ChatMessage = {
   content: string
   timestamp: number
   attachments?: ChatAttachment[]
-  isVoice?: boolean
 }
 
 export type ChatAttachment = {
@@ -53,259 +48,41 @@ const DEFAULT_SUGGESTIONS: ChatSuggestion[] = [
   { id: '2', text: 'Show me the analytics dashboard', category: 'action' },
   { id: '3', text: 'Add 5 tasks to the queue', category: 'action' },
   { id: '4', text: 'What are the keyboard shortcuts?', category: 'help' },
-  { id: '5', text: 'How does collision avoidance work?', category: 'question' },
-  { id: '6', text: 'How do I adjust robot speed?', category: 'question' }
-]
-
-const VOICE_CHAT_SUGGESTIONS: ChatSuggestion[] = [
-  { id: 'v1', text: 'Tell me about the simulation status', category: 'question' },
-  { id: 'v2', text: 'What are the active robots doing?', category: 'question' },
-  { id: 'v3', text: 'Explain the collision avoidance system', category: 'help' },
-  { id: 'v4', text: 'How do I use voice commands?', category: 'help' },
-  { id: 'v5', text: 'What can I ask you?', category: 'question' },
-  { id: 'v6', text: 'Give me system metrics overview', category: 'action' }
+  { id: '5', text: 'How does collision avoidance work?', category: 'question' }
 ]
 
 export function ChatSupport() {
   const [isOpen, setIsOpen] = useState(false)
-  const [activeTab, setActiveTab] = useState<'voice' | 'text'>('voice')
+  const [activeTab, setActiveTab] = useState('chat')
   const [messages, setMessages] = useState<ChatMessage[]>([])
-  const [voiceMessages, setVoiceMessages] = useState<ChatMessage[]>([])
   const [inputValue, setInputValue] = useState('')
   const [isTyping, setIsTyping] = useState(false)
-  const [isVoiceTyping, setIsVoiceTyping] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
   const [attachments, setAttachments] = useState<ChatAttachment[]>([])
   const [suggestions, setSuggestions] = useState<ChatSuggestion[]>(DEFAULT_SUGGESTIONS)
-  const [voiceSuggestions, setVoiceSuggestions] = useState<ChatSuggestion[]>(VOICE_CHAT_SUGGESTIONS)
+  
+  // Voice state
   const [isVoiceListening, setIsVoiceListening] = useState(false)
-  const [voiceTranscript, setVoiceTranscript] = useState('')
-  const [interimVoiceTranscript, setInterimVoiceTranscript] = useState('')
-  const [isSpeaking, setIsSpeaking] = useState(false)
-
+  
   const scrollAreaRef = useRef<HTMLDivElement>(null)
-  const voiceScrollAreaRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const voiceMessagesEndRef = useRef<HTMLDivElement>(null)
-  const recognitionRef = useRef<any>(null)
-  const synthRef = useRef<SpeechSynthesisUtterance | null>(null)
-
-  useEffect(() => {
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-      const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition
-      recognitionRef.current = new SpeechRecognition()
-      recognitionRef.current.continuous = false
-      recognitionRef.current.interimResults = true
-      recognitionRef.current.lang = 'en-US'
-
-      recognitionRef.current.onresult = (event: any) => {
-        let interim = ''
-        let final = ''
-
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          const transcript = event.results[i][0].transcript
-          if (event.results[i].isFinal) {
-            final += transcript
-          } else {
-            interim += transcript
-          }
-        }
-
-        setInterimVoiceTranscript(interim)
-        if (final) {
-          setVoiceTranscript(final)
-          handleVoiceMessage(final)
-        }
-      }
-
-      recognitionRef.current.onerror = (event: any) => {
-        console.error('Speech recognition error:', event.error)
-        setIsVoiceListening(false)
-        if (event.error !== 'no-speech' && event.error !== 'aborted') {
-          toast.error('Voice recognition error', {
-            description: 'Please try again'
-          })
-        }
-      }
-
-      recognitionRef.current.onend = () => {
-        setIsVoiceListening(false)
-        setInterimVoiceTranscript('')
-      }
-    }
-
-    return () => {
-      if (recognitionRef.current) {
-        recognitionRef.current.stop()
-      }
-      if (synthRef.current) {
-        window.speechSynthesis.cancel()
-      }
-    }
-  }, [])
-
-  useEffect(() => {
-    if (isOpen) {
-      setUnreadCount(0)
-      scrollToBottom()
-    }
-  }, [isOpen, messages, voiceMessages])
-
-  useEffect(() => {
-    if (!isOpen && (messages.length > 0 || voiceMessages.length > 0)) {
-      const lastMessage = activeTab === 'text' 
-        ? messages[messages.length - 1] 
-        : voiceMessages[voiceMessages.length - 1]
-      
-      if (lastMessage && lastMessage.role === 'assistant') {
-        const now = Date.now()
-        if (now - lastMessage.timestamp < 2000) {
-          setUnreadCount(prev => prev + 1)
-        }
-      }
-    }
-  }, [messages, voiceMessages, isOpen, activeTab])
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-    voiceMessagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
-  const speak = (text: string) => {
-    if (!('speechSynthesis' in window)) return
-
-    window.speechSynthesis.cancel()
-    
-    const utterance = new SpeechSynthesisUtterance(text)
-    utterance.rate = 1.1
-    utterance.pitch = 1.0
-    utterance.volume = 0.9
-    
-    utterance.onstart = () => setIsSpeaking(true)
-    utterance.onend = () => setIsSpeaking(false)
-    utterance.onerror = () => setIsSpeaking(false)
-    
-    synthRef.current = utterance
-    window.speechSynthesis.speak(utterance)
-  }
-
-  const stopSpeaking = () => {
-    window.speechSynthesis.cancel()
-    setIsSpeaking(false)
-  }
-
-  const toggleVoiceListening = () => {
-    if (!recognitionRef.current) {
-      toast.error('Voice recognition not supported', {
-        description: 'Please use a compatible browser'
-      })
-      return
+  useEffect(() => {
+    if (isOpen) {
+      scrollToBottom()
+      setUnreadCount(0)
     }
+  }, [isOpen, messages])
 
-    if (isVoiceListening) {
-      recognitionRef.current.stop()
-      setIsVoiceListening(false)
-    } else {
-      setVoiceTranscript('')
-      setInterimVoiceTranscript('')
-      recognitionRef.current.start()
-      setIsVoiceListening(true)
-      toast.info('Listening...', { description: 'Speak your message' })
-    }
-  }
-
-  const handleVoiceMessage = async (transcript: string) => {
-    if (!transcript.trim()) return
-
-    const userMessage: ChatMessage = {
-      id: `voice-msg-${Date.now()}-user`,
-      role: 'user',
-      content: transcript.trim(),
-      timestamp: Date.now(),
-      isVoice: true
-    }
-
-    setVoiceMessages(prev => [...prev, userMessage])
-    setIsVoiceTyping(true)
-    setIsVoiceListening(false)
-
-    setTimeout(async () => {
-      const aiResponse = await generateAIResponse(transcript, undefined, true)
-      
-      const assistantMessage: ChatMessage = {
-        id: `voice-msg-${Date.now()}-assistant`,
-        role: 'assistant',
-        content: aiResponse,
-        timestamp: Date.now(),
-        isVoice: true
-      }
-
-      setVoiceMessages(prev => [...prev, assistantMessage])
-      setIsVoiceTyping(false)
-
-      speak(aiResponse)
-
-      const newSuggestions = await generateSmartSuggestions([...voiceMessages, userMessage, assistantMessage], true)
-      setVoiceSuggestions(newSuggestions)
-    }, 800 + Math.random() * 400)
-  }
-
-  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files
-    if (!files || files.length === 0) return
-
-    const newAttachments: ChatAttachment[] = []
-
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i]
-      
-      if (file.size > 10 * 1024 * 1024) {
-        toast.error('File too large', {
-          description: `${file.name} exceeds 10MB limit`
-        })
-        continue
-      }
-
-      let type: 'image' | 'video' | 'file' = 'file'
-      if (file.type.startsWith('image/')) type = 'image'
-      else if (file.type.startsWith('video/')) type = 'video'
-
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        const attachment: ChatAttachment = {
-          id: `attachment-${Date.now()}-${i}`,
-          type,
-          name: file.name,
-          url: e.target?.result as string,
-          size: file.size
-        }
-        newAttachments.push(attachment)
-        
-        if (newAttachments.length === files.length) {
-          setAttachments(prev => [...prev, ...newAttachments])
-          toast.success('Files attached', {
-            description: `${newAttachments.length} file(s) ready to send`
-          })
-        }
-      }
-      reader.readAsDataURL(file)
-    }
-
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ''
-    }
-  }
-
-  const removeAttachment = (id: string) => {
-    setAttachments(prev => prev.filter(a => a.id !== id))
-  }
-
-  const generateAIResponse = async (userMessage: string, userAttachments?: ChatAttachment[], isVoice?: boolean): Promise<string> => {
+  const generateAIResponse = async (userMessage: string, userAttachments?: ChatAttachment[]) => {
     try {
-      let promptContext = `You are a helpful AI assistant for an autonomous warehouse robotics simulation platform. 
-A user has sent you a ${isVoice ? 'voice' : 'text'} message. Provide a helpful, concise, and friendly response.
-
+      let promptContext = `You are a helpful AI assistant for an autonomous warehouse robotics simulation platform.
+      
 User message: "${userMessage}"`
 
       if (userAttachments && userAttachments.length > 0) {
@@ -316,60 +93,45 @@ User message: "${userMessage}"`
         promptContext += `\n\nAcknowledge their attachments and provide relevant assistance.`
       }
 
-      if (isVoice) {
-        promptContext += `\n\nThis is a voice conversation, so keep your response natural and conversational, under 2-3 sentences.`
-      } else {
-        promptContext += `\n\nKeep your response under 3 sentences and be specific to warehouse robotics, simulation controls, or the platform features.`
+      // @ts-ignore
+      if (window.spark?.llm) {
+        // @ts-ignore
+        const response = await window.spark.llm(promptContext, 'gpt-4o-mini')
+        return response
       }
-
-      const response = await window.spark.llm(promptContext, 'gpt-4o-mini')
-      return response
+      
+      // Fallback if LLM is not available
+      return "I can help you with that simulation task. What specific parameters would you like to adjust?"
     } catch (error) {
-      return isVoice 
-        ? "I'm here to help! Could you please repeat that?" 
-        : "I'm here to help! Could you please rephrase your question? I can assist with simulation controls, robot management, analytics, and more."
+      console.error('AI Error:', error)
+      return "I'm having trouble connecting to the AI service right now. Please try again."
     }
   }
 
-  const generateSmartSuggestions = async (conversationContext: ChatMessage[], isVoice?: boolean): Promise<ChatSuggestion[]> => {
-    if (conversationContext.length === 0) {
-      return isVoice ? VOICE_CHAT_SUGGESTIONS : DEFAULT_SUGGESTIONS
-    }
+  const generateSmartSuggestions = async (conversationContext: ChatMessage[]) => {
+    if (conversationContext.length === 0) return DEFAULT_SUGGESTIONS
 
     try {
       const recentMessages = conversationContext.slice(-4).map(m => `${m.role}: ${m.content}`).join('\n')
+      const promptText = `Based on this conversation, suggest 3 follow-up actions:\n${recentMessages}\nReturn JSON with "suggestions" array ({text, category}).`
       
-      const promptText = `Based on this conversation about a warehouse robotics simulation, suggest 4 helpful follow-up questions or actions the user might want:
-
-${recentMessages}
-
-Return a JSON object with a "suggestions" property containing an array of 4 suggestion objects. Each object should have:
-- text: A short, actionable question or command (under 50 chars)
-- category: Either "question", "action", or "help"
-
-Example format:
-{
-  "suggestions": [
-    {"text": "Show me the analytics", "category": "action"},
-    {"text": "How do I add more tasks?", "category": "question"}
-  ]
-}`
-
-      const response = await window.spark.llm(promptText, 'gpt-4o-mini', true)
-      const parsed = JSON.parse(response)
-      
-      if (parsed.suggestions && Array.isArray(parsed.suggestions)) {
-        return parsed.suggestions.map((s: any, idx: number) => ({
-          id: `smart-${Date.now()}-${idx}`,
-          text: s.text,
-          category: s.category
-        }))
+      // @ts-ignore
+      if (window.spark?.llm) {
+        // @ts-ignore
+        const response = await window.spark.llm(promptText, 'gpt-4o-mini', true) // true for JSON
+        const parsed = JSON.parse(response)
+        if (parsed.suggestions && Array.isArray(parsed.suggestions)) {
+          return parsed.suggestions.map((s: any, idx: number) => ({
+            id: `smart-${Date.now()}-${idx}`,
+            text: s.text,
+            category: s.category || 'question'
+          }))
+        }
       }
     } catch (error) {
-      console.error('Failed to generate smart suggestions:', error)
+      console.error('Failed to generate suggestions', error)
     }
-
-    return isVoice ? VOICE_CHAT_SUGGESTIONS : DEFAULT_SUGGESTIONS
+    return DEFAULT_SUGGESTIONS
   }
 
   const sendMessage = async (content: string, messageAttachments?: ChatAttachment[]) => {
@@ -388,6 +150,7 @@ Example format:
     setAttachments([])
     setIsTyping(true)
 
+    // Simulate network delay for AI
     setTimeout(async () => {
       const aiResponse = await generateAIResponse(content, messageAttachments)
       
@@ -400,18 +163,14 @@ Example format:
 
       setMessages(prev => [...prev, assistantMessage])
       setIsTyping(false)
+      
+      if (!isOpen) {
+        setUnreadCount(prev => prev + 1)
+      }
 
       const newSuggestions = await generateSmartSuggestions([...messages, userMessage, assistantMessage])
       setSuggestions(newSuggestions)
-    }, 800 + Math.random() * 400)
-  }
-
-  const handleSuggestionClick = (suggestion: ChatSuggestion, isVoice?: boolean) => {
-    if (isVoice) {
-      handleVoiceMessage(suggestion.text)
-    } else {
-      sendMessage(suggestion.text)
-    }
+    }, 1000)
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -421,44 +180,60 @@ Example format:
     }
   }
 
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files
+    if (!files || files.length === 0) return
+
+    const newAttachments: ChatAttachment[] = []
+    
+    Array.from(files).forEach((file, i) => {
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error('File too large', { description: `${file.name} exceeds 10MB limit` })
+        return
+      }
+
+      let type: 'image' | 'video' | 'file' = 'file'
+      if (file.type.startsWith('image/')) type = 'image'
+      else if (file.type.startsWith('video/')) type = 'video'
+
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const attachment: ChatAttachment = {
+          id: `attachment-${Date.now()}-${i}`,
+          type,
+          name: file.name,
+          url: e.target?.result as string,
+          size: file.size
+        }
+        setAttachments(prev => [...prev, attachment])
+      }
+      reader.readAsDataURL(file)
+    })
+
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
+  const removeAttachment = (id: string) => {
+    setAttachments(prev => prev.filter(a => a.id !== id))
+  }
+
   const handleClearChat = () => {
-    if (activeTab === 'voice') {
-      setVoiceMessages([])
-      setVoiceSuggestions(VOICE_CHAT_SUGGESTIONS)
-    } else {
-      setMessages([])
-      setSuggestions(DEFAULT_SUGGESTIONS)
-      setAttachments([])
-    }
+    setMessages([])
+    setSuggestions(DEFAULT_SUGGESTIONS)
     toast.info('Chat cleared')
   }
 
   if (!isOpen) {
     return (
-      <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3">
+      <div className="fixed bottom-6 right-6 z-50">
         <Button
           size="lg"
-          onClick={() => {
-            setIsOpen(true)
-            setActiveTab('voice')
-          }}
-          className="rounded-full h-14 w-14 shadow-lg relative bg-accent hover:bg-accent/90"
-          title="Voice Chat"
-        >
-          <Microphone size={28} weight="duotone" />
-        </Button>
-        <Button
-          size="lg"
-          onClick={() => {
-            setIsOpen(true)
-            setActiveTab('text')
-          }}
-          className="rounded-full h-14 w-14 shadow-lg relative"
-          title="Text Chat"
+          onClick={() => setIsOpen(true)}
+          className="rounded-full h-14 w-14 shadow-lg relative bg-primary hover:bg-primary/90 text-primary-foreground"
         >
           <ChatCircleDots size={28} weight="duotone" />
           {unreadCount > 0 && (
-            <Badge className="absolute -top-1 -right-1 h-6 w-6 flex items-center justify-center p-0 bg-destructive text-destructive-foreground">
+            <Badge className="absolute -top-1 -right-1 h-6 w-6 flex items-center justify-center p-0 bg-destructive text-destructive-foreground rounded-full">
               {unreadCount}
             </Badge>
           )}
@@ -468,332 +243,129 @@ Example format:
   }
 
   return (
-    <Card className="fixed bottom-6 right-6 w-96 h-[600px] z-50 glass-panel flex flex-col shadow-xl">
+    <Card className="fixed bottom-6 right-6 w-96 h-[600px] z-50 glass-panel flex flex-col shadow-xl bg-card/95 backdrop-blur border-border">
       <div className="flex items-center justify-between p-4 border-b border-border">
         <div className="flex items-center gap-2">
-          <div className="p-2 rounded-lg bg-primary/20">
+          <div className="p-2 rounded-lg bg-primary/10">
             <Sparkle size={20} weight="duotone" className="text-primary" />
           </div>
           <div>
             <h3 className="font-semibold">AI Support</h3>
-            <p className="text-xs text-muted-foreground">
-              {activeTab === 'voice' ? 'Voice conversation' : 'Text chat'}
-            </p>
+            <p className="text-xs text-muted-foreground">Online • GPT-4o</p>
           </div>
         </div>
         <div className="flex items-center gap-1">
-          <Button
-            size="icon"
-            variant="ghost"
-            onClick={handleClearChat}
-            disabled={activeTab === 'voice' ? voiceMessages.length === 0 : messages.length === 0}
-          >
+          <Button size="icon" variant="ghost" onClick={handleClearChat} title="Clear Chat">
             <Trash size={18} />
           </Button>
-          <Button
-            size="icon"
-            variant="ghost"
-            onClick={() => setIsOpen(false)}
-          >
+          <Button size="icon" variant="ghost" onClick={() => setIsOpen(false)}>
             <X size={20} />
           </Button>
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'voice' | 'text')} className="flex-1 flex flex-col">
-        <TabsList className="mx-4 mt-2 grid w-auto grid-cols-2">
-          <TabsTrigger value="voice" className="gap-2">
-            <Microphone size={16} weight="duotone" />
-            Voice
-          </TabsTrigger>
-          <TabsTrigger value="text" className="gap-2">
-            <ChatCircleDots size={16} weight="duotone" />
-            Text
-          </TabsTrigger>
-        </TabsList>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
+        <div className="px-4 pt-2">
+          <TabsList className="w-full grid grid-cols-2">
+            <TabsTrigger value="chat">Chat</TabsTrigger>
+            <TabsTrigger value="voice">Voice Mode</TabsTrigger>
+          </TabsList>
+        </div>
 
-        <TabsContent value="voice" className="flex-1 flex flex-col mt-0">
-          <ScrollArea ref={voiceScrollAreaRef} className="flex-1 p-4">
-            <div className="space-y-4">
-              {voiceMessages.length === 0 && (
-                <div className="text-center py-8 space-y-3">
-                  <div className="inline-flex items-center justify-center p-4 rounded-xl bg-accent/10">
-                    <Microphone size={48} weight="duotone" className="text-accent" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold mb-2">Voice Chat Ready</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Click the microphone to start speaking, or try a suggestion below.
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {voiceMessages.map((message) => (
-                <div
-                  key={message.id}
-                  className={cn(
-                    'flex gap-2',
-                    message.role === 'user' ? 'justify-end' : 'justify-start'
-                  )}
-                >
-                  <div
-                    className={cn(
-                      'flex gap-2 max-w-[85%]',
-                      message.role === 'user' ? 'flex-row-reverse' : 'flex-row'
-                    )}
-                  >
-                    <div className={cn(
-                      'flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center',
-                      message.role === 'user' ? 'bg-accent text-accent-foreground' : 'bg-primary/20'
-                    )}>
-                      {message.role === 'user' ? <User size={18} weight="duotone" /> : <Robot size={18} weight="duotone" className="text-primary" />}
-                    </div>
-                    <div
-                      className={cn(
-                        'flex flex-col gap-1',
-                        message.role === 'user' ? 'items-end' : 'items-start'
-                      )}
-                    >
-                      <div
-                        className={cn(
-                          'rounded-2xl px-4 py-2 text-sm',
-                          message.role === 'user'
-                            ? 'bg-accent text-accent-foreground rounded-br-sm'
-                            : 'bg-muted text-foreground rounded-bl-sm'
-                        )}
-                      >
-                        <p className="whitespace-pre-wrap">{message.content}</p>
-                      </div>
-                      <span className="text-xs text-muted-foreground px-2">
-                        {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-
-              {isVoiceTyping && (
-                <div className="flex gap-2">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-                    <Robot size={18} weight="duotone" className="text-primary" />
-                  </div>
-                  <div className="bg-muted rounded-2xl rounded-bl-sm px-4 py-3">
-                    <div className="flex gap-1">
-                      <div className="w-2 h-2 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: '0ms' }} />
-                      <div className="w-2 h-2 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: '150ms' }} />
-                      <div className="w-2 h-2 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: '300ms' }} />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {isVoiceListening && interimVoiceTranscript && (
-                <div className="flex gap-2 justify-end">
-                  <div className="flex gap-2 max-w-[85%] flex-row-reverse">
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-accent text-accent-foreground flex items-center justify-center">
-                      <User size={18} weight="duotone" />
-                    </div>
-                    <div className="bg-accent/50 text-accent-foreground rounded-2xl rounded-br-sm px-4 py-2 text-sm italic">
-                      <p>{interimVoiceTranscript}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div ref={voiceMessagesEndRef} />
-            </div>
-          </ScrollArea>
-
-          <div className="p-4 border-t border-border space-y-3">
-            {voiceSuggestions.length > 0 && voiceMessages.length === 0 && (
-              <div className="space-y-2">
-                <p className="text-xs text-muted-foreground">Try asking:</p>
-                <div className="flex flex-wrap gap-2">
-                  {voiceSuggestions.slice(0, 3).map(suggestion => (
-                    <Button
-                      key={suggestion.id}
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleSuggestionClick(suggestion, true)}
-                      className="text-xs"
-                      disabled={isVoiceListening || isVoiceTyping}
-                    >
-                      {suggestion.text}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div className="flex items-center gap-2">
-              <Button
-                size="lg"
-                onClick={toggleVoiceListening}
-                disabled={isVoiceTyping || isSpeaking}
-                className={cn(
-                  'flex-1',
-                  isVoiceListening && 'bg-destructive hover:bg-destructive/90'
-                )}
-              >
-                {isVoiceListening ? (
-                  <>
-                    <Stop size={20} weight="fill" className="mr-2" />
-                    Stop Listening
-                  </>
-                ) : (
-                  <>
-                    <Microphone size={20} weight="duotone" className="mr-2" />
-                    Start Speaking
-                  </>
-                )}
-              </Button>
-
-              {isSpeaking && (
-                <Button
-                  size="icon"
-                  variant="outline"
-                  onClick={stopSpeaking}
-                  className="flex-shrink-0"
-                >
-                  <SpeakerHigh size={20} />
-                </Button>
-              )}
-            </div>
-
-            {!recognitionRef.current && (
-              <p className="text-xs text-center text-muted-foreground">
-                Voice recognition not supported in this browser
-              </p>
-            )}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="text" className="flex-1 flex flex-col mt-0">
-          <ScrollArea ref={scrollAreaRef} className="flex-1 p-4">
+        <TabsContent value="chat" className="flex-1 flex flex-col min-h-0 mt-0">
+          <ScrollArea className="flex-1 p-4">
             <div className="space-y-4">
               {messages.length === 0 && (
-                <div className="text-center py-8 space-y-3">
-                  <div className="inline-flex items-center justify-center p-4 rounded-xl bg-primary/10">
-                    <Robot size={48} weight="duotone" className="text-primary" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold mb-2">Welcome to Support Chat!</h4>
-                    <p className="text-sm text-muted-foreground">
-                      I'm your AI assistant. Ask me about simulation controls, analytics, or any features.
-                    </p>
-                  </div>
+                <div className="text-center text-muted-foreground py-10">
+                  <Sparkle size={48} className="mx-auto mb-4 opacity-20" />
+                  <p>How can I help you with the simulation today?</p>
                 </div>
               )}
-
-              {messages.map((message) => (
+              
+              {messages.map((msg) => (
                 <div
-                  key={message.id}
+                  key={msg.id}
                   className={cn(
-                    'flex gap-2',
-                    message.role === 'user' ? 'justify-end' : 'justify-start'
+                    "flex flex-col gap-1 max-w-[85%]",
+                    msg.role === 'user' ? "ml-auto items-end" : "mr-auto items-start"
                   )}
                 >
                   <div
                     className={cn(
-                      'flex gap-2 max-w-[85%]',
-                      message.role === 'user' ? 'flex-row-reverse' : 'flex-row'
+                      "p-3 rounded-2xl text-sm",
+                      msg.role === 'user' 
+                        ? "bg-primary text-primary-foreground rounded-tr-none" 
+                        : "bg-muted rounded-tl-none"
                     )}
                   >
-                    <div className={cn(
-                      'flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center',
-                      message.role === 'user' ? 'bg-accent text-accent-foreground' : 'bg-primary/20'
-                    )}>
-                      {message.role === 'user' ? <User size={18} weight="duotone" /> : <Robot size={18} weight="duotone" className="text-primary" />}
-                    </div>
-                    <div
-                      className={cn(
-                        'flex flex-col gap-1',
-                        message.role === 'user' ? 'items-end' : 'items-start'
-                      )}
-                    >
-                      <div
-                        className={cn(
-                          'rounded-2xl px-4 py-2 text-sm',
-                          message.role === 'user'
-                            ? 'bg-accent text-accent-foreground rounded-br-sm'
-                            : 'bg-muted text-foreground rounded-bl-sm'
-                        )}
-                      >
-                        <p className="whitespace-pre-wrap">{message.content}</p>
-                      </div>
-                      {message.attachments && message.attachments.length > 0 && (
-                        <div className="flex flex-col gap-1">
-                          {message.attachments.map(att => (
-                            <div key={att.id} className="flex items-center gap-2 text-xs text-muted-foreground">
-                              {att.type === 'image' && <ImageIcon size={14} />}
-                              {att.type === 'video' && <VideoCamera size={14} />}
-                              {att.type === 'file' && <FileText size={14} />}
-                              <span>{att.name}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      <span className="text-xs text-muted-foreground px-2">
-                        {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </span>
-                    </div>
+                    {msg.content}
                   </div>
+                  
+                  {msg.attachments && msg.attachments.length > 0 && (
+                    <div className="flex gap-2 flex-wrap justify-end">
+                      {msg.attachments.map(att => (
+                        <div key={att.id} className="relative group rounded-md overflow-hidden border border-border w-16 h-16">
+                          {att.type === 'image' ? (
+                            <img src={att.url} alt={att.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-background">
+                              <FileText size={24} className="text-muted-foreground" />
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  <span className="text-[10px] text-muted-foreground px-1">
+                    {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
                 </div>
               ))}
-
+              
               {isTyping && (
-                <div className="flex gap-2">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-                    <Robot size={18} weight="duotone" className="text-primary" />
-                  </div>
-                  <div className="bg-muted rounded-2xl rounded-bl-sm px-4 py-3">
-                    <div className="flex gap-1">
-                      <div className="w-2 h-2 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: '0ms' }} />
-                      <div className="w-2 h-2 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: '150ms' }} />
-                      <div className="w-2 h-2 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: '300ms' }} />
-                    </div>
-                  </div>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <div className="w-2 h-2 rounded-full bg-primary/50 animate-bounce" />
+                  <div className="w-2 h-2 rounded-full bg-primary/50 animate-bounce delay-75" />
+                  <div className="w-2 h-2 rounded-full bg-primary/50 animate-bounce delay-150" />
                 </div>
               )}
-
               <div ref={messagesEndRef} />
             </div>
           </ScrollArea>
 
-          <div className="p-4 border-t border-border space-y-3">
-            {suggestions.length > 0 && messages.length === 0 && (
-              <div className="flex flex-wrap gap-2">
-                {suggestions.slice(0, 3).map(suggestion => (
-                  <Button
-                    key={suggestion.id}
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleSuggestionClick(suggestion)}
-                    className="text-xs"
+          <div className="p-4 border-t border-border bg-background/50">
+            {suggestions.length > 0 && (
+              <div className="flex gap-2 overflow-x-auto pb-3 no-scrollbar">
+                {suggestions.map(s => (
+                  <Badge 
+                    key={s.id} 
+                    variant="outline" 
+                    className="cursor-pointer hover:bg-primary/10 whitespace-nowrap"
+                    onClick={() => sendMessage(s.text)}
                   >
-                    {suggestion.text}
-                  </Button>
+                    {s.text}
+                  </Badge>
                 ))}
               </div>
             )}
 
             {attachments.length > 0 && (
-              <div className="flex flex-wrap gap-2">
+              <div className="flex gap-2 mb-2 overflow-x-auto py-2">
                 {attachments.map(att => (
-                  <div
-                    key={att.id}
-                    className="flex items-center gap-2 bg-muted rounded-lg px-3 py-1.5 text-xs"
-                  >
-                    {att.type === 'image' && <ImageIcon size={14} />}
-                    {att.type === 'video' && <VideoCamera size={14} />}
-                    {att.type === 'file' && <FileText size={14} />}
-                    <span className="max-w-[120px] truncate">{att.name}</span>
+                  <div key={att.id} className="relative group w-12 h-12 flex-shrink-0">
+                    {att.type === 'image' ? (
+                      <img src={att.url} alt={att.name} className="w-full h-full object-cover rounded-md border border-border" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-muted rounded-md border border-border">
+                        <FileText size={20} />
+                      </div>
+                    )}
                     <button
                       onClick={() => removeAttachment(att.id)}
-                      className="text-muted-foreground hover:text-foreground"
+                      className="absolute -top-1 -right-1 bg-destructive text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
                     >
-                      <X size={14} />
+                      <X size={10} />
                     </button>
                   </div>
                 ))}
@@ -802,38 +374,70 @@ Example format:
 
             <form onSubmit={handleSubmit} className="flex gap-2">
               <input
-                ref={fileInputRef}
                 type="file"
-                multiple
-                accept="image/*,video/*,.pdf,.doc,.docx,.txt"
-                onChange={handleFileSelect}
+                ref={fileInputRef}
                 className="hidden"
+                multiple
+                onChange={handleFileSelect}
               />
               <Button
                 type="button"
+                variant="ghost"
                 size="icon"
-                variant="outline"
+                className="shrink-0"
                 onClick={() => fileInputRef.current?.click()}
-                disabled={isTyping}
               >
-                <Paperclip size={18} />
+                <Paperclip size={20} />
               </Button>
               <Input
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
-                placeholder="Type your message..."
-                disabled={isTyping}
+                placeholder="Type a message..."
                 className="flex-1"
+                disabled={isTyping}
               />
-              <Button
-                type="submit"
-                size="icon"
-                disabled={isTyping || (!inputValue.trim() && attachments.length === 0)}
-              >
-                <PaperPlaneRight size={18} weight="fill" />
+              <Button type="submit" size="icon" disabled={(!inputValue.trim() && attachments.length === 0) || isTyping}>
+                <PaperPlaneRight size={20} weight="fill" />
               </Button>
             </form>
           </div>
+        </TabsContent>
+
+        <TabsContent value="voice" className="flex-1 flex flex-col items-center justify-center p-6 text-center mt-0 space-y-6">
+          <div className={`w-32 h-32 rounded-full flex items-center justify-center transition-all duration-500 ${isVoiceListening ? 'bg-primary/20 shadow-[0_0_40px_rgba(var(--primary),0.3)]' : 'bg-muted'}`}>
+            <div className={`w-24 h-24 rounded-full flex items-center justify-center bg-background transition-transform ${isVoiceListening ? 'scale-110' : 'scale-100'}`}>
+              <Microphone 
+                size={40} 
+                weight={isVoiceListening ? "fill" : "regular"}
+                className={isVoiceListening ? "text-primary animate-pulse" : "text-muted-foreground"} 
+              />
+            </div>
+          </div>
+          
+          <div>
+            <h3 className="text-lg font-semibold mb-2">Voice Control</h3>
+            <p className="text-sm text-muted-foreground max-w-[250px] mx-auto">
+              {isVoiceListening 
+                ? "Listening... Speak naturally to control the simulation." 
+                : "Tap the microphone to start voice commands."}
+            </p>
+          </div>
+
+          <Button 
+            size="lg" 
+            variant={isVoiceListening ? "destructive" : "default"}
+            onClick={() => setIsVoiceListening(!isVoiceListening)}
+            className="w-full max-w-[200px]"
+          >
+            {isVoiceListening ? "Stop Listening" : "Start Listening"}
+          </Button>
+
+          {isVoiceListening && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 px-3 py-1 rounded-full">
+              <SpeakerHigh size={14} />
+              <span>Voice output active</span>
+            </div>
+          )}
         </TabsContent>
       </Tabs>
     </Card>
