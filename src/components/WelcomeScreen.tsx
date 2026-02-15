@@ -1,35 +1,32 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTri
-  AndroidLogo, 
-  Cpu, 
-  ChartBa
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { motion, AnimatePresence } from 'framer-motion'
+import {
+  AndroidLogo,
+  Cpu,
+  ChartBar,
   Brain,
   ArrowRight,
   Key,
   Database,
-  CheckCirc
-} from '@p
-interfac
-  onUs
+  CheckCircle,
+  Lock,
+  RocketLaunch,
+  CloudArrowUp,
+  SpinnerGap,
+  Eye
+} from '@phosphor-icons/react'
 
-  const
-  cons
-  const [formDa
-    passwor
-    org
+interface WelcomeScreenProps {
+  onGetStarted: () => void
+  onUserAuthenticated?: (userData: any) => void
+}
 
-    const ch
-        const user = await win
-
-      } catch (error) {
-      }
-    checkUser()
-
-
-
+export function WelcomeScreen({ onGetStarted, onUserAuthenticated }: WelcomeScreenProps) {
   const [showAuth, setShowAuth] = useState(false)
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin')
   const [isLoading, setIsLoading] = useState(false)
@@ -44,7 +41,7 @@ interfac
   useEffect(() => {
     const checkUser = async () => {
       try {
-        const user = await spark.user()
+        const user = await window.spark.user()
         if (user) {
           setCurrentUser(user)
         }
@@ -61,199 +58,181 @@ interfac
 
     try {
       await new Promise(resolve => setTimeout(resolve, 1500))
-      
 
+      const mockUser = {
+        name: formData.name || formData.email.split('@')[0],
+        email: formData.email,
+        organization: formData.organization || 'Guest User',
+        avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.name || formData.email)}&background=random`
+      }
+
+      await window.spark.kv.set('user_session', mockUser)
+      setCurrentUser(mockUser)
+      onUserAuthenticated?.(mockUser)
+      
+      setTimeout(() => {
+        onGetStarted()
+      }, 500)
+    } catch (error) {
+      console.error('Auth error:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const features = [
     {
-      title: '10 Autonomous Ro
+      title: '10 Autonomous Robots',
+      icon: AndroidLogo,
+      description: 'Real-time path planning and collision avoidance'
     },
+    {
+      title: 'Machine Learning',
       icon: Brain,
-      description: 'Adaptive
-    {
-      t
-
-      icon: Cpu,
-      description: 'What-if scenari
-    {
-      title: 'Real-ti
+      description: 'Adaptive congestion detection and traffic optimization'
     },
-      icon: Eye
-      description: 'Immer
+    {
+      title: 'Digital Twin',
+      icon: Cpu,
+      description: 'What-if scenario analysis and predictive maintenance'
+    },
+    {
+      title: 'Real-time Analytics',
+      icon: ChartBar,
+      description: 'Comprehensive metrics and performance tracking'
+    },
+    {
+      title: '3D Visualization',
+      icon: Eye,
+      description: 'Immersive warehouse environment with Three.js'
+    }
   ]
-  r
 
-        <motion.div
-          style={{
-            backgr
-          animate={{
-          }}
-            duration: 20,
-            ease: 'linear'
-        />
+  return (
+    <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-6 relative overflow-hidden">
+      <motion.div
+        className="absolute inset-0 opacity-20"
+        style={{
+          background: 'radial-gradient(circle at 50% 50%, oklch(0.55 0.25 265), transparent 70%)'
+        }}
+        animate={{
+          scale: [1, 1.2, 1],
+          opacity: [0.2, 0.3, 0.2]
+        }}
+        transition={{
+          duration: 20,
+          repeat: Infinity,
+          ease: 'linear'
+        }}
+      />
 
-        initial={{
-   
-
-          {!showAuth
-     
-              animate={{
-              className="space-y-8"
-              <div className="text-center space-y-4">
-      
-     
-                >
-                </motion.div>
-                <motion.h1
-      
-     
-                  Au
-
-                  initial={{ opacity: 0, y: 20 }}
-      
-     
-                
-                {currentUser && (
-                    initial={{ opacity: 0 }}
-      
-     
-                    <s
-                )}
-
-      
-     
-              >
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-     
-   
-
-          
-                          <h3 className="font-semibold text-lg mb-1">{feature.title}</h3>
-                        </div>
-                    </Card>
-                ))}
-
-                in
-                transition={{ delay: 1.2 }}
-              >
-            
-                  on
-                  <RocketLaunch size={24} weight="duoton
-            
-
-                  size="l
-                  className="
-                >
-            
-          
-            
-
-                c
-                <p className="text-sm t
-                </p>
-                  <div className="flex
-                    <span>Real-time Analytics</spa
-       
-                    <span>Cloud Stora
-                  <div c
-                    <sp
-                </div>
-            </motion.div>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8 }}
+        className="relative z-10 w-full max-w-6xl"
+      >
+        <AnimatePresence mode="wait">
+          {!showAuth ? (
             <motion.div
-              initial={{ opacity: 0
-              exit={{ opacity: 0, s
+              key="welcome"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="space-y-8"
             >
-                <div className="text-center mb-6">
-                    <Lock s
-                  <h2 className="text-2x
-                    Sign in to sync your
-                </div>
-                <Tabs value={authMode} onValueChange={(v) => setAuthMode(v as any)} className="mb-6">
-                 
-                  </TabsList>
-                  <TabsConten
+              <div className="text-center space-y-4">
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
+                  className="inline-flex items-center justify-center p-6 rounded-2xl bg-primary/20 mb-4"
+                >
+                  <AndroidLogo size={64} weight="duotone" className="text-primary" />
+                </motion.div>
 
-                        <I
-                          type="email"
-                          value={formData.email}
-                          required
-                      </div>
-                 
-                          id="password
-                          pl
+                <motion.h1
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                  className="text-5xl lg:text-6xl font-bold tracking-tight"
+                >
+                  Autonomous Warehouse
+                </motion.h1>
 
-                        /
-                      <Button type="submit" class
-                          <>
-                            Signing In...
-                        ) : (
-                 
-                          </>
-                      </But
+                <motion.p
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.6 }}
+                  className="text-xl text-muted-foreground max-w-2xl mx-auto"
+                >
+                  Enterprise-grade robotics simulation with AI-powered optimization, real-time analytics, and multi-warehouse networking
+                </motion.p>
 
-                  <TabsContent va
-                      <div cl
-                        <Input
-                          type="text"
-                          value={formData.name}
-                          required
-                   
-                        <Label htmlFor="signup-em
-                          id="signup-email"
-                          place
-                  
-                    
-
-                        <
-                          type="text"
-                          value={formData.orga
-                        />
-                      <div className="space-y-2">
-               
-                          type="password"
-                          val
-                          required
-                      </div>
-                        {isLoading ? (
-                            <SpinnerGap size={20} className="
-                   
-                          <>
-                            Create Account
-                        )}
-                    </form>
-                </Tabs>
-                <div classNam
-                    variant="ghost"
-                    onClick={() => setShowAuth(false)}
+                {currentUser && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.7 }}
+                    className="flex items-center justify-center gap-2 text-accent"
                   >
-                  </Button>
-              </Card>
-          )}
-      </motion.div>
-  )
+                    <CheckCircle size={20} weight="fill" />
+                    <span className="text-sm">Signed in as {currentUser.name}</span>
+                  </motion.div>
+                )}
+              </div>
 
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.8 }}
+                className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl mx-auto"
+              >
+                {features.map((feature, index) => (
+                  <motion.div
+                    key={feature.title}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.8 + index * 0.1 }}
+                  >
+                    <Card className="glass-panel p-6 h-full hover:scale-105 transition-transform">
+                      <div className="flex items-start gap-4">
+                        <div className="p-3 rounded-lg bg-primary/20">
+                          <feature.icon size={24} weight="duotone" className="text-primary" />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-lg mb-1">{feature.title}</h3>
+                          <p className="text-sm text-muted-foreground">{feature.description}</p>
+                        </div>
+                      </div>
+                    </Card>
+                  </motion.div>
+                ))}
+              </motion.div>
 
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1.2 }}
+                className="flex flex-col items-center gap-4"
+              >
+                <Button
+                  size="lg"
+                  onClick={onGetStarted}
+                  className="group px-8 py-6 text-lg"
+                >
+                  <RocketLaunch size={24} weight="duotone" className="mr-2 group-hover:translate-x-1 transition-transform" />
+                  Launch Simulation
+                  <ArrowRight size={20} className="ml-2 group-hover:translate-x-1 transition-transform" />
+                </Button>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={() => setShowAuth(true)}
+                  className="px-8"
+                >
+                  <Key size={20} className="mr-2" />
                   Sign In / Sign Up
                 </Button>
               </motion.div>
