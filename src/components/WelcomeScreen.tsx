@@ -1,11 +1,11 @@
 import { useState } from 'react'
-import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/but
 import { Label } from '@/components/ui/label'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
-import { motion, AnimatePresence } from 'framer-motion'
+import {
+  ChartBar,
+  RocketLaunch,
+  Lightning,
 import {
   Brain,
   ChartBar,
@@ -79,32 +79,32 @@ export default function WelcomeScreen({ onUserAuthenticated, onGetStarted }: Wel
     try {
       const mockUser = {
         email: formData.email,
-        name: formData.name || formData.email.split('@')[0],
-        organization: formData.organization || 'Guest User'
-      }
+    } finally {
+    }
+
       await window.spark?.kv?.set('user_session', mockUser)
-      onUserAuthenticated?.(mockUser)
-      setTimeout(() => {
+        <div style={{
+            repeating-li
         onGetStarted()
-      }, 500)
+          hei
     } catch (error) {
       console.error('Auth error:', error)
     } finally {
       setIsLoading(false)
-    }
+     
   }
 
-  return (
+          
     <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
-      <div className="absolute inset-0 opacity-30">
+          x: [0, -80, 0],
         <div style={{
-          backgroundImage: `
+        transition={{
             repeating-linear-gradient(90deg, oklch(0.35 0.05 265 / 0.1) 0px, transparent 1px, transparent 50px, oklch(0.35 0.05 265 / 0.1) 51px),
             repeating-linear-gradient(0deg, oklch(0.35 0.05 265 / 0.1) 0px, transparent 1px, transparent 50px, oklch(0.35 0.05 265 / 0.1) 51px)
           `,
           height: '100%',
           width: '100%'
-        }} />
+        {!sho
       </div>
 
       <motion.div
@@ -118,18 +118,18 @@ export default function WelcomeScreen({ onUserAuthenticated, onGetStarted }: Wel
           left: '10%',
           filter: 'blur(60px)'
         }}
-        animate={{
-          y: [0, -50, 0],
+                  
+                    boxSh
           x: [0, 30, 0]
         }}
         transition={{
-          duration: 20,
+                      '
           repeat: Infinity,
           ease: 'easeInOut'
         }}
-      />
-      <motion.div
-        style={{
+        
+                >
+                
           position: 'absolute',
           width: '400px',
           height: '400px',
@@ -138,27 +138,27 @@ export default function WelcomeScreen({ onUserAuthenticated, onGetStarted }: Wel
           bottom: '10%',
           right: '10%',
           filter: 'blur(60px)'
-        }}
+          
         animate={{
-          x: [0, -80, 0],
+                <div clas
           y: [0, 50, 0]
-        }}
-        transition={{
+          
+                </p>
           duration: 25,
-          repeat: Infinity,
+                <TabsList c
           ease: 'easeInOut'
-        }}
-      />
 
-      <AnimatePresence mode="wait">
-        {!showAuth ? (
-          <motion.div
-            key="welcome"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
+        
+
+                          id="si-pa
+                      
+                     
+                         
+                      </div>
+                  </TabsContent>
+                  <TabsContent value="sig
             className="max-w-6xl w-full z-10 space-y-12"
-          >
+           
             <Card className="glass-panel p-8 lg:p-12">
               <div className="text-center space-y-6 mb-12">
                 <motion.div 
@@ -185,9 +185,9 @@ export default function WelcomeScreen({ onUserAuthenticated, onGetStarted }: Wel
                     repeat: Infinity,
                     ease: 'easeInOut'
                   }}
-                >
+
                   <AndroidLogo size={64} weight="duotone" className="text-white" />
-                </motion.div>
+
                 <motion.div 
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -241,7 +241,7 @@ export default function WelcomeScreen({ onUserAuthenticated, onGetStarted }: Wel
                 >
                   <RocketLaunch size={20} weight="duotone" className="mr-2" />
                   Launch Simulation
-                </Button>
+
                 <Button 
                   size="lg" 
                   variant="outline"
@@ -253,15 +253,15 @@ export default function WelcomeScreen({ onUserAuthenticated, onGetStarted }: Wel
                 </Button>
               </div>
             </Card>
-          </motion.div>
-        ) : (
-          <motion.div
-            key="auth"
+
+
+
+
             initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
+
             exit={{ opacity: 0, scale: 0.95 }}
-            className="w-full max-w-md z-10"
-          >
+
+
             <Card className="glass-panel p-8">
               <motion.div 
                 className="text-center mb-6"
@@ -270,7 +270,7 @@ export default function WelcomeScreen({ onUserAuthenticated, onGetStarted }: Wel
               >
                 <div className="inline-flex p-3 rounded-lg bg-primary/20 mb-4">
                   <AndroidLogo size={40} weight="duotone" className="text-primary" />
-                </div>
+
                 <h2 className="text-2xl font-bold mb-2">Welcome Back</h2>
                 <p className="text-sm text-muted-foreground">
                   Sign in to access your warehouse dashboard
@@ -281,11 +281,11 @@ export default function WelcomeScreen({ onUserAuthenticated, onGetStarted }: Wel
                 <TabsList className="grid w-full grid-cols-2 mb-6">
                   <TabsTrigger value="signin">Sign In</TabsTrigger>
                   <TabsTrigger value="signup">Sign Up</TabsTrigger>
-                </TabsList>
 
-                <form onSubmit={handleAuth}>
+
+
                   <TabsContent value="signin" className="space-y-4">
-                    <div className="space-y-2">
+
                       <Label htmlFor="si-email" className="text-sm font-semibold">Email</Label>
                       <div className="relative">
                         <EnvelopeSimple size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -299,8 +299,8 @@ export default function WelcomeScreen({ onUserAuthenticated, onGetStarted }: Wel
                           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                         />
                       </div>
-                    </div>
-                    <div className="space-y-2">
+
+
                       <Label htmlFor="si-password" className="text-sm font-semibold">Password</Label>
                       <div className="relative">
                         <Lock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -314,11 +314,11 @@ export default function WelcomeScreen({ onUserAuthenticated, onGetStarted }: Wel
                           onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                         />
                       </div>
-                    </div>
-                  </TabsContent>
+
+
 
                   <TabsContent value="signup" className="space-y-4">
-                    <div className="space-y-2">
+
                       <Label htmlFor="su-name" className="text-sm font-semibold">Full Name</Label>
                       <div className="relative">
                         <User size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -332,8 +332,8 @@ export default function WelcomeScreen({ onUserAuthenticated, onGetStarted }: Wel
                           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                         />
                       </div>
-                    </div>
-                    <div className="space-y-2">
+
+
                       <Label htmlFor="su-email" className="text-sm font-semibold">Email</Label>
                       <div className="relative">
                         <EnvelopeSimple size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -347,8 +347,8 @@ export default function WelcomeScreen({ onUserAuthenticated, onGetStarted }: Wel
                           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                         />
                       </div>
-                    </div>
-                    <div className="space-y-2">
+
+
                       <Label htmlFor="su-password" className="text-sm font-semibold">Password</Label>
                       <div className="relative">
                         <Lock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -362,7 +362,7 @@ export default function WelcomeScreen({ onUserAuthenticated, onGetStarted }: Wel
                           onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                         />
                       </div>
-                    </div>
+
                     <div className="space-y-2">
                       <Label htmlFor="su-org" className="text-sm font-semibold">Organization (Optional)</Label>
                       <div className="relative">
@@ -377,21 +377,21 @@ export default function WelcomeScreen({ onUserAuthenticated, onGetStarted }: Wel
                         />
                       </div>
                     </div>
-                  </TabsContent>
+
 
                   <div className="mt-6 space-y-4">
                     <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
-                      {isLoading ? (
-                        <>
-                          <SpinnerGap size={20} className="animate-spin mr-2" />
-                          Authenticating...
-                        </>
-                      ) : (
-                        <>
-                          {authMode === 'signin' ? 'Sign In' : 'Create Account'}
-                        </>
-                      )}
-                    </Button>
+
+
+
+
+
+
+
+
+
+
+
                     <Button 
                       type="button"
                       variant="ghost" 
@@ -400,13 +400,13 @@ export default function WelcomeScreen({ onUserAuthenticated, onGetStarted }: Wel
                     >
                       Back to Welcome
                     </Button>
-                  </div>
-                </form>
-              </Tabs>
-            </Card>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  )
-}
+
+
+
+
+
+
+
+
+
+
