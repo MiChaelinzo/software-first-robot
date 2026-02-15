@@ -23,8 +23,7 @@ import {
   Stop
 } from '@phosphor-icons/react'
 
-type ChatAttachment = {
-  id: string
+type ChatAttachment = {  id: string
   type: 'image' | 'video' | 'file'
   name: string
   size: number
