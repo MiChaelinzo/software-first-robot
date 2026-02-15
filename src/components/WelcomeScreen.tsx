@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { Badge } from '@/components/ui/badge'
+import { Tabs, TabsContent, TabsList, TabsTri
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -13,93 +13,93 @@ import {
   SpinnerGap,
   Lightning,
   Graph,
-  Network,
-  Sparkle,
-  User,
-  Buildings,
-  EnvelopeSimple,
-  Lock,
-  AndroidLogo
-} from '@phosphor-icons/react'
+  Envelope
+  AndroidL
+import 
+interface We
+  onGetStarted: (
+
+  const [show
+  const [isLoading, setIsLoadi
 import { motion } from 'framer-motion'
 
-interface WelcomeScreenProps {
-  onUserAuthenticated?: (user: any) => void
-  onGetStarted: () => void
-}
-
-export default function WelcomeScreen({ onUserAuthenticated, onGetStarted }: WelcomeScreenProps) {
-  const [showAuth, setShowAuth] = useState(false)
-  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin')
-  const [isLoading, setIsLoading] = useState(false)
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    name: '',
     organization: ''
-  })
 
-  const features = [
     {
-      title: 'AI-Powered Pathfinding',
-      description: 'Smart collision avoidance with real-time path optimization',
-      icon: Brain
-    },
-    {
+ 
+
       title: 'Adaptive Learning',
-      description: 'ML algorithms optimize traffic patterns automatically',
       icon: Sparkle
-    },
     {
-      title: 'Digital Twin',
-      description: 'Real-time simulation and what-if scenario analysis',
-      icon: Cube
+      description: 'Real-time simulation and what-i
     },
+      title: '
+      icon: Netwo
     {
-      title: 'Network Operations',
-      description: 'Multi-warehouse coordination and load balancing',
-      icon: Network
-    },
-    {
-      title: '3D Visualization',
-      description: 'Immersive warehouse view with real-time tracking',
-      icon: Graph
-    },
-    {
-      title: 'Live Analytics',
-      description: 'Real-time metrics and predictive insights',
+      description: '
+    
+
       icon: ChartBar
-    }
   ]
-
-  const handleAuth = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleAuth = async (e: React.F
     setIsLoading(true)
-
     try {
-      const mockUser = {
-        email: formData.email,
+      
+     
+      }
+      await window.spark?.kv?.set('user_session', mockUser)
+      if (onUserAut
+      
+     
+      console.error('Auth er
+      setIsLoading(false)
+  }
+  retu
+     
+        top: 0,
+        right: 0,
+        backgroundI
+      
+     
+      }} />
+      <motion.div
+          positio
+      
+     
+          left: '10%',
+        }}
+          x: [0, 30,
+     
+   
+
+      />
+      <motion.div
+          position: 'a
+
+         
+          right: '10%',
+        }}
         name: formData.name || formData.email.split('@')[0],
         organization: formData.organization || 'Demo Warehouse',
         authenticated: true
       }
 
-      await window.spark?.kv?.set('user_session', mockUser)
+      />
 
       if (onUserAuthenticated) {
         onUserAuthenticated(mockUser)
       }
 
       onGetStarted()
-    } catch (error) {
-      console.error('Auth error:', error)
-    } finally {
-      setIsLoading(false)
+                style
+                  width: '120px',
+               
+                  alignIt
     }
-  }
+   
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
+                  ]
       <div style={{
         position: 'absolute',
         top: 0,
@@ -114,47 +114,47 @@ export default function WelcomeScreen({ onUserAuthenticated, onGetStarted }: Wel
         width: '100%'
       }} />
 
-      <motion.div
-        style={{
-          position: 'absolute',
-          width: '500px',
-          height: '500px',
-          background: 'radial-gradient(circle, oklch(0.55 0.25 265 / 0.15) 0%, transparent 70%)',
-          borderRadius: '50%',
-          top: '10%',
-          left: '10%',
-          filter: 'blur(60px)'
-        }}
+                <
+                
+                </Badge>
+                  <Cube s
+                </Badge>
+            </div>
+            <div className="gr
+                <moti
+                  init
+                  transition={
+          
         animate={{
           x: [0, 30, 0],
           y: [0, -20, 0]
-        }}
-        transition={{
+
+              <Button
           duration: 20,
-          repeat: Infinity,
-          ease: 'easeInOut'
-        }}
+              >
+                Launch Simu
+          
       />
 
       <motion.div
         style={{
-          position: 'absolute',
-          width: '400px',
-          height: '400px',
-          background: 'radial-gradient(circle, oklch(0.75 0.20 145 / 0.15) 0%, transparent 70%)',
-          borderRadius: '50%',
-          bottom: '10%',
-          right: '10%',
-          filter: 'blur(60px)'
+            </div>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          exit={{ opacity: 0, 
+          <Card classNam
+              className
+              animate={{ opaci
         }}
-        animate={{
+              </di
           x: [0, -30, 0],
-          y: [0, 50, 0]
+              </p>
         }}
         transition={{
-          duration: 25,
+                <TabsTr
           repeat: Infinity,
-          ease: 'easeInOut'
+                <TabsConten
         }}
       />
 
@@ -167,7 +167,7 @@ export default function WelcomeScreen({ onUserAuthenticated, onGetStarted }: Wel
         >
           <Card className="glass-panel p-8 lg:p-12">
             <div className="text-center space-y-6 mb-12">
-              <motion.div 
+}
                 style={{ 
                   background: 'linear-gradient(135deg, oklch(0.55 0.25 265) 0%, oklch(0.75 0.20 145) 100%)',
                   width: '120px',
@@ -197,16 +197,16 @@ export default function WelcomeScreen({ onUserAuthenticated, onGetStarted }: Wel
 
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
+
                 transition={{ delay: 0.2 }}
-              >
+
                 <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold tracking-tight mb-4">
                   Autonomous Warehouse
                 </h1>
                 <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto">
                   Advanced robotics simulation platform with AI-powered optimization, real-time analytics, and multi-warehouse coordination
-                </p>
-              </motion.div>
+
+
               <div className="flex items-center justify-center gap-3 flex-wrap">
                 <Badge variant="secondary" className="px-4 py-2 text-sm">
                   <Lightning size={14} weight="fill" className="mr-1.5" />
@@ -304,7 +304,7 @@ export default function WelcomeScreen({ onUserAuthenticated, onGetStarted }: Wel
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                       />
-                    </div>
+
                   </div>
 
                   <div className="space-y-2">
