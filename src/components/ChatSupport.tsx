@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
@@ -332,7 +332,6 @@ User message: "${userMessage}"`
               )}
               <div ref={messagesEndRef} />
             </div>
-            <ScrollBar orientation="horizontal" />
           </ScrollArea>
 
           <div className="p-4 border-t border-border bg-background/50">
