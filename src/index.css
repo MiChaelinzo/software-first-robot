@@ -80,14 +80,10 @@
 
 body {
   font-family: var(--font-body);
+}
 
 .font-mono {
-  0%, 100% {
-    box-shadow: 0 0 20px oklch(0.75 0.20 145 / 0.3);
-  }
-  50% {
-    box-shadow: 0 0 30px oklch(0.75 0.20 145 / 0.6);
-  }
+  font-family: var(--font-mono);
 }
 
 @keyframes float {
