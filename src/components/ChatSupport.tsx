@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
-import { useKV } from '@github/spark/hooks'
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
+import { Button } from '@/components/ui/but
+import { ScrollArea } from '@/components/ui/scr
+import { Badge } from '@/components/ui/badg
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -30,37 +30,37 @@ export type ChatMessage = {
   attachments?: ChatAttachment[]
 }
 
-export type ChatAttachment = {
-  id: string
-  type: 'image' | 'video' | 'file'
-  name: string
   url: string
-  size: number
 }
-
 export type ChatSuggestion = {
-  id: string
   text: string
-  category: 'question' | 'action' | 'help'
 }
+const DEFAULT_
+ 
 
-const DEFAULT_SUGGESTIONS: ChatSuggestion[] = [
-  { id: '1', text: 'How do I start the simulation?', category: 'question' },
-  { id: '2', text: 'What do the robot colors mean?', category: 'question' },
-  { id: '3', text: 'Optimize my warehouse layout', category: 'action' },
-  { id: '4', text: 'Explain collision avoidance', category: 'help' },
-  { id: '5', text: 'Show me performance tips', category: 'help' },
-  { id: '6', text: 'How do I add more robots?', category: 'question' },
-]
+  { id: '6', text: 'How do I a
 
-export function ChatSupport() {
-  const [isOpen, setIsOpen] = useState(false)
-  const [messages, setMessages] = useKV<ChatMessage[]>('chat_messages', [])
-  const [inputValue, setInputValue] = useState('')
-  const [isTyping, setIsTyping] = useState(false)
-  const [suggestions, setSuggestions] = useState<ChatSuggestion[]>(DEFAULT_SUGGESTIONS)
-  const [attachments, setAttachments] = useState<ChatAttachment[]>([])
-  const [unreadCount, setUnreadCount] = useState(0)
+  const [isOpe
+  const [inputValue, setInputValue] = useS
+ 
+
+  const scrollAreaRef = useRef<HTMLDivElement>(
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+      setUnreadCount(0)
+    }
+
+    if (!isOpen && messages.length > 0) {
+ 
+
+        }
+    }
+
+    messagesEndRef.current?.scrollIntoView({ behav
+
+    const files = event.target.files
+
+
   
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -219,7 +219,7 @@ Example format:
 
     setMessages(prev => [...prev, userMessage])
     setInputValue('')
-    setAttachments([])
+    toast.success('Cha
     setIsTyping(true)
 
     setTimeout(async () => {
@@ -255,251 +255,251 @@ Example format:
     setMessages([])
     setSuggestions(DEFAULT_SUGGESTIONS)
     setAttachments([])
-    toast.success('Chat cleared')
-  }
-
-  const formatFileSize = (bytes: number): string => {
-    if (bytes < 1024) return bytes + ' B'
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
-    return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
-  }
-
-  const formatTime = (timestamp: number): string => {
-    const date = new Date(timestamp)
-    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-  }
-
-  if (!isOpen) {
-    return (
-      <Button
-        onClick={() => setIsOpen(true)}
-        size="lg"
-        className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full shadow-2xl hover:scale-110 transition-transform duration-200 bg-primary hover:bg-primary/90"
-      >
-        <ChatCircleDots size={28} weight="duotone" />
-        {unreadCount > 0 && (
-          <Badge className="absolute -top-1 -right-1 h-6 w-6 rounded-full p-0 flex items-center justify-center bg-destructive text-destructive-foreground">
-            {unreadCount}
-          </Badge>
-        )}
-      </Button>
-    )
-  }
-
-  return (
-    <Card className="fixed bottom-6 right-6 z-50 w-[420px] h-[600px] shadow-2xl flex flex-col glass-panel overflow-hidden">
-      <div className="flex items-center justify-between p-4 border-b border-border bg-card/50">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-primary/20">
-            <Robot size={24} weight="duotone" className="text-primary" />
           </div>
-          <div>
-            <h3 className="font-semibold text-lg">Support Assistant</h3>
-            <p className="text-xs text-muted-foreground">
-              {isTyping ? 'Typing...' : 'Online'}
-            </p>
+   
+
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          {messages.length > 0 && (
+        <div className="flex items-center
             <Button
-              variant="ghost"
               size="icon"
-              onClick={handleClearChat}
-              className="h-8 w-8"
-            >
-              <Trash size={18} />
-            </Button>
+   
+
           )}
-          <Button
             variant="ghost"
-            size="icon"
             onClick={() => setIsOpen(false)}
-            className="h-8 w-8"
-          >
-            <X size={20} />
-          </Button>
-        </div>
+   
+
       </div>
-
-      <ScrollArea className="flex-1 p-4">
-        <div className="space-y-4">
-          {messages.length === 0 && (
-            <div className="text-center py-8 space-y-4">
-              <div className="inline-flex p-4 rounded-full bg-primary/10">
-                <Sparkle size={32} weight="duotone" className="text-primary" />
-              </div>
-              <div>
+      <Scrol
+          {me
+              <div className="inline-fl
+              </d
                 <h4 className="font-semibold mb-2">Welcome to Support Chat!</h4>
-                <p className="text-sm text-muted-foreground">
-                  Ask me anything about the warehouse simulation, controls, or features.
-                </p>
+       
               </div>
-            </div>
           )}
-
           {messages.map((message) => (
-            <div
-              key={message.id}
-              className={cn(
-                'flex gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300',
-                message.role === 'user' ? 'flex-row-reverse' : 'flex-row'
-              )}
-            >
-              <div
-                className={cn(
-                  'flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center',
-                  message.role === 'user' ? 'bg-accent/20' : 'bg-primary/20'
+              key={messag
+                'f
+          
+              <
+     
+   
+
+          
                 )}
-              >
-                {message.role === 'user' ? (
-                  <User size={18} weight="duotone" className="text-accent" />
-                ) : (
-                  <Robot size={18} weight="duotone" className="text-primary" />
-                )}
-              </div>
               
-              <div
                 className={cn(
-                  'flex-1 space-y-2',
-                  message.role === 'user' ? 'items-end' : 'items-start'
-                )}
+                  message.role === 'user' ? 'items-end' 
               >
-                <div
-                  className={cn(
-                    'inline-block rounded-2xl px-4 py-2 max-w-[280px]',
-                    message.role === 'user'
-                      ? 'bg-accent text-accent-foreground rounded-br-sm'
+                
+               
                       : 'bg-muted text-foreground rounded-bl-sm'
-                  )}
                 >
-                  <p className="text-sm break-words">{message.content}</p>
                 </div>
-
-                {message.attachments && message.attachments.length > 0 && (
-                  <div className="space-y-2">
-                    {message.attachments.map((att) => (
-                      <div
-                        key={att.id}
-                        className="flex items-center gap-2 text-xs bg-muted/50 rounded-lg p-2 max-w-[280px]"
+                
+                
+              
                       >
-                        {att.type === 'image' && <ImageIcon size={16} />}
-                        {att.type === 'video' && <VideoCamera size={16} />}
-                        {att.type === 'file' && <FileText size={16} />}
-                        <div className="flex-1 min-w-0">
-                          <p className="truncate font-medium">{att.name}</p>
-                          <p className="text-muted-foreground">{formatFileSize(att.size)}</p>
-                        </div>
-                      </div>
-                    ))}
+                        {att.type =
+                   
+                          <p 
+                      </d
                   </div>
-                )}
 
-                <p className="text-xs text-muted-foreground px-1">
-                  {formatTime(message.timestamp)}
-                </p>
+             
               </div>
-            </div>
           ))}
-
-          {isTyping && (
-            <div className="flex gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-primary/20">
-                <Robot size={18} weight="duotone" className="text-primary" />
+          {i
+              <di
               </div>
-              <div className="bg-muted rounded-2xl rounded-bl-sm px-4 py-3">
-                <div className="flex gap-1">
-                  <div className="w-2 h-2 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <div className="w-2 h-2 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <div className="w-2 h-2 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: '300ms' }} />
+                <div cl
+                  <div className="w-2 h-2 ro
                 </div>
-              </div>
-            </div>
-          )}
+           
 
-          <div ref={messagesEndRef} />
         </div>
-      </ScrollArea>
 
-      {suggestions.length > 0 && messages.length < 6 && (
-        <div className="px-4 py-2 border-t border-border/50 bg-card/30">
-          <p className="text-xs text-muted-foreground mb-2 font-medium">Suggested:</p>
-          <div className="flex flex-wrap gap-2">
-            {suggestions.slice(0, 3).map((suggestion) => (
+        <div
+
               <Button
-                key={suggestion.id}
                 variant="outline"
-                size="sm"
-                onClick={() => handleSuggestionClick(suggestion)}
-                className="text-xs h-7 rounded-full"
+                onClick={() => handle
               >
-                {suggestion.text}
               </Button>
-            ))}
           </div>
-        </div>
       )}
-
-      {attachments.length > 0 && (
-        <div className="px-4 py-2 border-t border-border/50 bg-card/30">
+      {attachments.
           <div className="flex flex-wrap gap-2">
-            {attachments.map((att) => (
               <div
-                key={att.id}
-                className="flex items-center gap-2 bg-muted rounded-lg px-3 py-1.5 text-xs"
-              >
-                {att.type === 'image' && <ImageIcon size={14} />}
-                {att.type === 'video' && <VideoCamera size={14} />}
-                {att.type === 'file' && <FileText size={14} />}
-                <span className="max-w-[100px] truncate">{att.name}</span>
-                <button
-                  onClick={() => removeAttachment(att.id)}
-                  className="hover:text-destructive transition-colors"
-                >
-                  <X size={14} />
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+                className="flex items-center gap-2 bg-muted rounded-lg px-3 py-1.5 text-
+                {att
+                {att
+                <b
+            
 
-      <form onSubmit={handleSubmit} className="p-4 border-t border-border bg-card/50">
-        <div className="flex gap-2">
+              </div>
+          </div>
+      )}
+      <form onSubmit={handle
           <input
-            ref={fileInputRef}
             type="file"
-            multiple
-            accept="image/*,video/*,.pdf,.doc,.docx,.txt"
-            onChange={handleFileSelect}
-            className="hidden"
-          />
+            acce
+            c
           <Button
-            type="button"
             variant="outline"
-            size="icon"
             onClick={() => fileInputRef.current?.click()}
-            className="flex-shrink-0"
           >
-            <Paperclip size={20} />
-          </Button>
-          <Input
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            placeholder="Type your message..."
-            className="flex-1"
+          </Button
+            val
+            placeholder="Type your message..
             disabled={isTyping}
-          />
           <Button
-            type="submit"
             size="icon"
-            disabled={(!inputValue.trim() && attachments.length === 0) || isTyping}
-            className="flex-shrink-0"
-          >
-            <PaperPlaneRight size={20} weight="fill" />
-          </Button>
+            classN
+            <PaperPl
         </div>
-      </form>
     </Card>
-  )
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
