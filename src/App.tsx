@@ -66,6 +66,7 @@ import { useVoiceCommands, type VoiceCommand } from '@/hooks/use-voice-commands'
 import { useTextToSpeech } from '@/hooks/use-text-to-speech'
 import { useAudioCues } from '@/hooks/use-audio-cues'
 import { AudioSettingsPanel } from '@/components/AudioSettingsPanel'
+import { ChatSupport } from '@/components/ChatSupport'
 import { AndroidLogo } from '@phosphor-icons/react'
 
 const GRID_WIDTH = 18
@@ -1850,6 +1851,8 @@ Analyze this robotics system and provide 2-3 specific, actionable optimization s
           </TabsContent>
         </Tabs>
       </div>
+      
+      <ChatSupport />
     </div>
   )
 }
