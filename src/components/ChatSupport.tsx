@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
-import { Button } from '@/components/ui/but
-import { ScrollArea } from '@/components/ui/scr
-import { Badge } from '@/components/ui/badg
+import { Card } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -30,38 +29,38 @@ export type ChatMessage = {
   attachments?: ChatAttachment[]
 }
 
+export type ChatAttachment = {
+  id: string
+  type: 'image' | 'video' | 'file'
+  name: string
+  size?: number
   url: string
 }
+
 export type ChatSuggestion = {
+  id: string
   text: string
+  category?: 'question' | 'action' | 'help'
 }
-const DEFAULT_
- 
 
-  { id: '6', text: 'How do I a
+const DEFAULT_SUGGESTIONS: ChatSuggestion[] = [
+  { id: '1', text: 'How do I start the simulation?', category: 'question' },
+  { id: '2', text: 'Show me the analytics dashboard', category: 'action' },
+  { id: '3', text: 'Add 5 tasks to the queue', category: 'action' },
+  { id: '4', text: 'What are the keyboard shortcuts?', category: 'help' },
+  { id: '5', text: 'How does collision avoidance work?', category: 'question' },
+  { id: '6', text: 'How do I adjust robot speed?', category: 'question' }
+]
 
-  const [isOpe
-  const [inputValue, setInputValue] = useS
- 
+export function ChatSupport() {
+  const [isOpen, setIsOpen] = useState(false)
+  const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [inputValue, setInputValue] = useState('')
+  const [isTyping, setIsTyping] = useState(false)
+  const [unreadCount, setUnreadCount] = useState(0)
+  const [attachments, setAttachments] = useState<ChatAttachment[]>([])
+  const [suggestions, setSuggestions] = useState<ChatSuggestion[]>(DEFAULT_SUGGESTIONS)
 
-  const scrollAreaRef = useRef<HTMLDivElement>(
-  const messagesEndRef = useRef<HTMLDivElement>(null)
-  useEffect(() => {
-      setUnreadCount(0)
-    }
-
-    if (!isOpen && messages.length > 0) {
- 
-
-        }
-    }
-
-    messagesEndRef.current?.scrollIntoView({ behav
-
-    const files = event.target.files
-
-
-  
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -156,8 +155,7 @@ User message: "${userMessage}"`
 
       promptContext += `\n\nKeep your response under 3 sentences and be specific to warehouse robotics, simulation controls, or the platform features.`
 
-      const prompt = window.spark.llmPrompt`${promptContext}`
-      const response = await window.spark.llm(prompt, 'gpt-4o-mini')
+      const response = await window.spark.llm(promptContext, 'gpt-4o-mini')
       return response
     } catch (error) {
       return "I'm here to help! Could you please rephrase your question? I can assist with simulation controls, robot management, analytics, and more."
@@ -188,8 +186,7 @@ Example format:
   ]
 }`
 
-      const prompt = window.spark.llmPrompt`${promptText}`
-      const response = await window.spark.llm(prompt, 'gpt-4o-mini', true)
+      const response = await window.spark.llm(promptText, 'gpt-4o-mini', true)
       const parsed = JSON.parse(response)
       
       if (parsed.suggestions && Array.isArray(parsed.suggestions)) {
@@ -219,7 +216,7 @@ Example format:
 
     setMessages(prev => [...prev, userMessage])
     setInputValue('')
-    toast.success('Cha
+    setAttachments([])
     setIsTyping(true)
 
     setTimeout(async () => {
@@ -255,251 +252,223 @@ Example format:
     setMessages([])
     setSuggestions(DEFAULT_SUGGESTIONS)
     setAttachments([])
-          </div>
-   
+    toast.info('Chat cleared')
+  }
 
-          </div>
-        <div className="flex items-center
-            <Button
-              size="icon"
-   
-
+  if (!isOpen) {
+    return (
+      <div className="fixed bottom-6 right-6 z-50">
+        <Button
+          size="lg"
+          onClick={() => setIsOpen(true)}
+          className="rounded-full h-14 w-14 shadow-lg relative"
+        >
+          <ChatCircleDots size={28} weight="duotone" />
+          {unreadCount > 0 && (
+            <Badge className="absolute -top-1 -right-1 h-6 w-6 flex items-center justify-center p-0 bg-destructive text-destructive-foreground">
+              {unreadCount}
+            </Badge>
           )}
-            variant="ghost"
-            onClick={() => setIsOpen(false)}
-   
-
+        </Button>
       </div>
-      <Scrol
-          {me
-              <div className="inline-fl
-              </d
-                <h4 className="font-semibold mb-2">Welcome to Support Chat!</h4>
-       
-              </div>
-          )}
-          {messages.map((message) => (
-              key={messag
-                'f
-          
-              <
-     
-   
+    )
+  }
 
-          
-                )}
-              
-                className={cn(
-                  message.role === 'user' ? 'items-end' 
-              >
-                
-               
-                      : 'bg-muted text-foreground rounded-bl-sm'
-                >
-                </div>
-                
-                
-              
-                      >
-                        {att.type =
-                   
-                          <p 
-                      </d
-                  </div>
-
-             
-              </div>
-          ))}
-          {i
-              <di
-              </div>
-                <div cl
-                  <div className="w-2 h-2 ro
-                </div>
-           
-
+  return (
+    <Card className="fixed bottom-6 right-6 w-96 h-[600px] z-50 glass-panel flex flex-col shadow-xl">
+      <div className="flex items-center justify-between p-4 border-b border-border">
+        <div className="flex items-center gap-2">
+          <div className="p-2 rounded-lg bg-primary/20">
+            <Sparkle size={20} weight="duotone" className="text-primary" />
+          </div>
+          <div>
+            <h3 className="font-semibold">AI Support</h3>
+            <p className="text-xs text-muted-foreground">Ask me anything</p>
+          </div>
         </div>
-
-        <div
-
-              <Button
-                variant="outline"
-                onClick={() => handle
-              >
-              </Button>
-          </div>
-      )}
-      {attachments.
-          <div className="flex flex-wrap gap-2">
-              <div
-                className="flex items-center gap-2 bg-muted rounded-lg px-3 py-1.5 text-
-                {att
-                {att
-                <b
-            
-
-              </div>
-          </div>
-      )}
-      <form onSubmit={handle
-          <input
-            type="file"
-            acce
-            c
-          <Button
-            variant="outline"
-            onClick={() => fileInputRef.current?.click()}
-          >
-          </Button
-            val
-            placeholder="Type your message..
-            disabled={isTyping}
+        <div className="flex items-center gap-1">
           <Button
             size="icon"
-            classN
-            <PaperPl
+            variant="ghost"
+            onClick={handleClearChat}
+            disabled={messages.length === 0}
+          >
+            <Trash size={18} />
+          </Button>
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={() => setIsOpen(false)}
+          >
+            <X size={20} />
+          </Button>
         </div>
+      </div>
+
+      <ScrollArea ref={scrollAreaRef} className="flex-1 p-4">
+        <div className="space-y-4">
+          {messages.length === 0 && (
+            <div className="text-center py-8 space-y-3">
+              <div className="inline-flex items-center justify-center p-4 rounded-xl bg-primary/10">
+                <Robot size={48} weight="duotone" className="text-primary" />
+              </div>
+              <div>
+                <h4 className="font-semibold mb-2">Welcome to Support Chat!</h4>
+                <p className="text-sm text-muted-foreground">
+                  I'm your AI assistant. Ask me about simulation controls, analytics, or any features.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {messages.map((message) => (
+            <div
+              key={message.id}
+              className={cn(
+                'flex gap-2',
+                message.role === 'user' ? 'justify-end' : 'justify-start'
+              )}
+            >
+              <div
+                className={cn(
+                  'flex gap-2 max-w-[85%]',
+                  message.role === 'user' ? 'flex-row-reverse' : 'flex-row'
+                )}
+              >
+                <div className={cn(
+                  'flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center',
+                  message.role === 'user' ? 'bg-accent text-accent-foreground' : 'bg-primary/20'
+                )}>
+                  {message.role === 'user' ? <User size={18} weight="duotone" /> : <Robot size={18} weight="duotone" className="text-primary" />}
+                </div>
+                <div
+                  className={cn(
+                    'flex flex-col gap-1',
+                    message.role === 'user' ? 'items-end' : 'items-start'
+                  )}
+                >
+                  <div
+                    className={cn(
+                      'rounded-2xl px-4 py-2 text-sm',
+                      message.role === 'user'
+                        ? 'bg-accent text-accent-foreground rounded-br-sm'
+                        : 'bg-muted text-foreground rounded-bl-sm'
+                    )}
+                  >
+                    <p className="whitespace-pre-wrap">{message.content}</p>
+                  </div>
+                  {message.attachments && message.attachments.length > 0 && (
+                    <div className="flex flex-col gap-1">
+                      {message.attachments.map(att => (
+                        <div key={att.id} className="flex items-center gap-2 text-xs text-muted-foreground">
+                          {att.type === 'image' && <ImageIcon size={14} />}
+                          {att.type === 'video' && <VideoCamera size={14} />}
+                          {att.type === 'file' && <FileText size={14} />}
+                          <span>{att.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <span className="text-xs text-muted-foreground px-2">
+                    {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))}
+
+          {isTyping && (
+            <div className="flex gap-2">
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+                <Robot size={18} weight="duotone" className="text-primary" />
+              </div>
+              <div className="bg-muted rounded-2xl rounded-bl-sm px-4 py-3">
+                <div className="flex gap-1">
+                  <div className="w-2 h-2 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <div className="w-2 h-2 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <div className="w-2 h-2 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: '300ms' }} />
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div ref={messagesEndRef} />
+        </div>
+      </ScrollArea>
+
+      <div className="p-4 border-t border-border space-y-3">
+        {suggestions.length > 0 && messages.length === 0 && (
+          <div className="flex flex-wrap gap-2">
+            {suggestions.slice(0, 3).map(suggestion => (
+              <Button
+                key={suggestion.id}
+                variant="outline"
+                size="sm"
+                onClick={() => handleSuggestionClick(suggestion)}
+                className="text-xs"
+              >
+                {suggestion.text}
+              </Button>
+            ))}
+          </div>
+        )}
+
+        {attachments.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {attachments.map(att => (
+              <div
+                key={att.id}
+                className="flex items-center gap-2 bg-muted rounded-lg px-3 py-1.5 text-xs"
+              >
+                {att.type === 'image' && <ImageIcon size={14} />}
+                {att.type === 'video' && <VideoCamera size={14} />}
+                {att.type === 'file' && <FileText size={14} />}
+                <span className="max-w-[120px] truncate">{att.name}</span>
+                <button
+                  onClick={() => removeAttachment(att.id)}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="flex gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept="image/*,video/*,.pdf,.doc,.docx,.txt"
+            onChange={handleFileSelect}
+            className="hidden"
+          />
+          <Button
+            type="button"
+            size="icon"
+            variant="outline"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isTyping}
+          >
+            <Paperclip size={18} />
+          </Button>
+          <Input
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            placeholder="Type your message..."
+            disabled={isTyping}
+            className="flex-1"
+          />
+          <Button
+            type="submit"
+            size="icon"
+            disabled={isTyping || (!inputValue.trim() && attachments.length === 0)}
+          >
+            <PaperPlaneRight size={18} weight="fill" />
+          </Button>
+        </form>
+      </div>
     </Card>
+  )
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

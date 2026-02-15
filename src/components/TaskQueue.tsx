@@ -70,7 +70,7 @@ export function TaskQueue({ tasks, onDeleteTask }: TaskQueueProps) {
     <div className="space-y-2">
       <AnimatePresence mode="popLayout">
         {sortedTasks.map((task, index) => {
-          const Icon = getTaskIcon(task.type)
+          const Icon = getTaskIcon(task.type) || Package
           
           return (
             <motion.div
