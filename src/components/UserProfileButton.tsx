@@ -7,21 +7,31 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
-import { User, SignOut, Gear, CheckCircle } from '@phosphor-icons/react'
+import { User, SignOut, Gear, CheckCircle, House } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 
 interface UserProfileButtonProps {
   user: any
   onSignOut: () => void
+  onResetWelcome?: () => void
 }
 
-export function UserProfileButton({ user, onSignOut }: UserProfileButtonProps) {
+export function UserProfileButton({ user, onSignOut, onResetWelcome }: UserProfileButtonProps) {
   const [open, setOpen] = useState(false)
 
   const handleSignOut = () => {
     onSignOut()
     setOpen(false)
     toast.info('Signed out successfully')
+  }
+
+  const handleResetWelcome = async () => {
+    await window.spark.kv.delete('has_completed_welcome')
+    setOpen(false)
+    if (onResetWelcome) {
+      onResetWelcome()
+    }
+    toast.info('Welcome screen reset')
   }
 
   if (!user) return null
@@ -64,12 +74,14 @@ export function UserProfileButton({ user, onSignOut }: UserProfileButtonProps) {
                   {user.authenticated ? 'Authenticated' : 'Guest'}
                 </span>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Session Started</span>
-                <span className="font-medium font-mono text-xs">
-                  {new Date(user.timestamp).toLocaleTimeString()}
-                </span>
-              </div>
+              {user.loginTime && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Login Time</span>
+                  <span className="font-medium font-mono text-xs">
+                    {new Date(user.loginTime).toLocaleTimeString()}
+                  </span>
+                </div>
+              )}
             </div>
 
             <div className="pt-4 border-t space-y-2">
@@ -77,6 +89,16 @@ export function UserProfileButton({ user, onSignOut }: UserProfileButtonProps) {
                 <Gear size={18} className="mr-2" />
                 Settings
               </Button>
+              {onResetWelcome && (
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start"
+                  onClick={handleResetWelcome}
+                >
+                  <House size={18} className="mr-2" />
+                  Show Welcome Screen
+                </Button>
+              )}
               <Button 
                 variant="destructive" 
                 className="w-full justify-start"

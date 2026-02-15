@@ -42,6 +42,7 @@ import { LoadBalancingPanel } from '@/components/LoadBalancingPanel'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card } from '@/components/ui/card'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { Button } from '@/components/ui/button'
 import type { Robot, Task, WarehouseCell, PerformanceMetrics } from '@/lib/types'
 import { 
   createWarehouse, 
@@ -67,7 +68,7 @@ import { useTextToSpeech } from '@/hooks/use-text-to-speech'
 import { useAudioCues } from '@/hooks/use-audio-cues'
 import { AudioSettingsPanel } from '@/components/AudioSettingsPanel'
 import { ChatSupport } from '@/components/ChatSupport'
-import { AndroidLogo } from '@phosphor-icons/react'
+import { AndroidLogo, User } from '@phosphor-icons/react'
 
 const GRID_WIDTH = 18
 const GRID_HEIGHT = 14
@@ -1255,29 +1256,33 @@ Analyze this robotics system and provide 2-3 specific, actionable optimization s
     return () => clearInterval(interval)
   }, [multiWarehouseSystem])
 
-  const handleUserAuthenticated = (userData: any) => {
+  const handleUserAuthenticated = async (userData: any) => {
     setCurrentUser(userData)
+    await window.spark.kv.set('has_completed_welcome', true)
     toast.success('Welcome!', {
       description: `Signed in as ${userData.name}`
     })
   }
 
-  const handleGetStarted = () => {
+  const handleGetStarted = async () => {
+    await window.spark.kv.set('has_completed_welcome', true)
     setShowWelcome(false)
   }
 
   useEffect(() => {
     const checkSession = async () => {
       const session = await window.spark.kv.get('user_session')
-      if (session) {
+      const hasCompletedWelcome = await window.spark.kv.get('has_completed_welcome')
+      
+      if (session && hasCompletedWelcome) {
         setCurrentUser(session)
         setShowWelcome(false)
+      } else {
+        setShowWelcome(true)
       }
     }
-    if (showWelcome) {
-      checkSession()
-    }
-  }, [showWelcome, setCurrentUser, setShowWelcome])
+    checkSession()
+  }, [setCurrentUser, setShowWelcome])
 
   if (showWelcome) {
     return (
@@ -1310,17 +1315,40 @@ Analyze this robotics system and provide 2-3 specific, actionable optimization s
               </h1>
               <p className="text-sm text-muted-foreground">
                 AI-Powered Robotics Simulation
+                {currentUser && (
+                  <span className="ml-2 text-accent">• {currentUser.name}</span>
+                )}
               </p>
             </div>
           </div>
-          <UserProfileButton 
-            user={currentUser} 
-            onSignOut={async () => {
-              await window.spark.kv.delete('user_session')
-              setCurrentUser(null)
-              setShowWelcome(true)
-            }}
-          />
+          <div className="flex items-center gap-3">
+            {currentUser ? (
+              <UserProfileButton 
+                user={currentUser} 
+                onSignOut={async () => {
+                  await window.spark.kv.delete('user_session')
+                  await window.spark.kv.delete('has_completed_welcome')
+                  setCurrentUser(null)
+                  setShowWelcome(true)
+                }}
+                onResetWelcome={async () => {
+                  await window.spark.kv.delete('has_completed_welcome')
+                  setShowWelcome(true)
+                }}
+              />
+            ) : (
+              <Button 
+                variant="outline"
+                onClick={async () => {
+                  await window.spark.kv.delete('has_completed_welcome')
+                  setShowWelcome(true)
+                }}
+              >
+                <User size={18} weight="duotone" className="mr-2" />
+                Sign In
+              </Button>
+            )}
+          </div>
         </header>
 
         <SimulationControls

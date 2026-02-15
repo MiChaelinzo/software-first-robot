@@ -666,6 +666,48 @@ All critical state persists between sessions using Spark KV:
 **Voice Recognition:** Chrome, Edge, Safari (iOS 15+)  
 **3D View:** WebGL 2.0 required
 
+### Troubleshooting
+
+**Welcome Screen Not Appearing:**
+
+If you've already completed the welcome flow and want to see it again:
+
+1. Click on your user profile button in the top-right
+2. Select "Show Welcome Screen" from the dropdown
+3. OR click "Sign Out" to reset completely
+
+**Alternative Method (Manual Reset):**
+
+If the welcome screen is completely stuck, you can manually reset it:
+
+```javascript
+// Open browser console (F12) and run:
+await window.spark.kv.delete('has_completed_welcome')
+await window.spark.kv.delete('user_session')
+// Then refresh the page
+```
+
+**Voice Commands Not Working:**
+
+- Ensure microphone permissions are granted
+- Use Chrome or Edge for best compatibility
+- Check that voice recognition is supported in your browser
+- Click "Start" in the Voice Control tab before speaking
+
+**3D View Performance Issues:**
+
+- Close other browser tabs
+- Reduce simulation speed
+- Disable heat trails and other overlays
+- Check that hardware acceleration is enabled in browser settings
+
+**Simulation Running Slowly:**
+
+- Reduce the number of robots using Scenario Generator
+- Lower the simulation speed multiplier
+- Close the 3D view tab
+- Clear browser cache and refresh
+
 ---
 
 ## 📊 Metrics & KPIs

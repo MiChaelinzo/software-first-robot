@@ -83,7 +83,8 @@ export default function WelcomeScreen({ onGetStarted, onUserAuthenticated }: Wel
         email: formData.email,
         name: formData.name || formData.email.split('@')[0],
         organization: formData.organization || 'Demo Warehouse',
-        authenticated: true
+        authenticated: true,
+        loginTime: Date.now()
       }
       
       await window.spark?.kv?.set('user_session', mockUser)
