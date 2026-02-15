@@ -51,6 +51,19 @@ const DEFAULT_SUGGESTIONS: ChatSuggestion[] = [
   { id: '5', text: 'How does collision avoidance work?', category: 'question' }
 ]
 
+const VOICE_SUGGESTIONS: ChatSuggestion[] = [
+  { id: 'v1', text: 'Start simulation', category: 'action' },
+  { id: 'v2', text: 'Stop simulation', category: 'action' },
+  { id: 'v3', text: 'Add task', category: 'action' },
+  { id: 'v4', text: 'Show 3D view', category: 'action' },
+  { id: 'v5', text: 'Show analytics', category: 'action' },
+  { id: 'v6', text: 'Increase speed', category: 'action' },
+  { id: 'v7', text: 'Decrease speed', category: 'action' },
+  { id: 'v8', text: 'Toggle heat trails', category: 'action' },
+  { id: 'v9', text: 'Status report', category: 'question' },
+  { id: 'v10', text: 'Optimize system', category: 'action' }
+]
+
 export function ChatSupport() {
   const [isOpen, setIsOpen] = useState(false)
   const [activeTab, setActiveTab] = useState('chat')
@@ -273,66 +286,68 @@ User message: "${userMessage}"`
         </div>
 
         <TabsContent value="chat" className="flex-1 flex flex-col min-h-0 mt-0">
-          <ScrollArea className="flex-1 p-4">
-            <div className="space-y-4">
-              {messages.length === 0 && (
-                <div className="text-center text-muted-foreground py-10">
-                  <Sparkle size={48} className="mx-auto mb-4 opacity-20" />
-                  <p>How can I help you with the simulation today?</p>
-                </div>
-              )}
-              
-              {messages.map((msg) => (
-                <div
-                  key={msg.id}
-                  className={cn(
-                    "flex flex-col gap-1 max-w-[85%]",
-                    msg.role === 'user' ? "ml-auto items-end" : "mr-auto items-start"
-                  )}
-                >
+          <div className="flex-1 overflow-hidden">
+            <ScrollArea className="h-full p-4">
+              <div className="space-y-4 min-h-full">
+                {messages.length === 0 && (
+                  <div className="text-center text-muted-foreground py-10">
+                    <Sparkle size={48} className="mx-auto mb-4 opacity-20" />
+                    <p>How can I help you with the simulation today?</p>
+                  </div>
+                )}
+                
+                {messages.map((msg) => (
                   <div
+                    key={msg.id}
                     className={cn(
-                      "p-3 rounded-2xl text-sm",
-                      msg.role === 'user' 
-                        ? "bg-primary text-primary-foreground rounded-tr-none" 
-                        : "bg-muted rounded-tl-none"
+                      "flex flex-col gap-1 max-w-[85%]",
+                      msg.role === 'user' ? "ml-auto items-end" : "mr-auto items-start"
                     )}
                   >
-                    {msg.content}
-                  </div>
-                  
-                  {msg.attachments && msg.attachments.length > 0 && (
-                    <div className="flex gap-2 flex-wrap justify-end">
-                      {msg.attachments.map(att => (
-                        <div key={att.id} className="relative group rounded-md overflow-hidden border border-border w-16 h-16">
-                          {att.type === 'image' ? (
-                            <img src={att.url} alt={att.name} className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-background">
-                              <FileText size={24} className="text-muted-foreground" />
-                            </div>
-                          )}
-                        </div>
-                      ))}
+                    <div
+                      className={cn(
+                        "p-3 rounded-2xl text-sm",
+                        msg.role === 'user' 
+                          ? "bg-primary text-primary-foreground rounded-tr-none" 
+                          : "bg-muted rounded-tl-none"
+                      )}
+                    >
+                      {msg.content}
                     </div>
-                  )}
-                  
-                  <span className="text-[10px] text-muted-foreground px-1">
-                    {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </span>
-                </div>
-              ))}
-              
-              {isTyping && (
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <div className="w-2 h-2 rounded-full bg-primary/50 animate-bounce" />
-                  <div className="w-2 h-2 rounded-full bg-primary/50 animate-bounce delay-75" />
-                  <div className="w-2 h-2 rounded-full bg-primary/50 animate-bounce delay-150" />
-                </div>
-              )}
-              <div ref={messagesEndRef} />
-            </div>
-          </ScrollArea>
+                    
+                    {msg.attachments && msg.attachments.length > 0 && (
+                      <div className="flex gap-2 flex-wrap justify-end">
+                        {msg.attachments.map(att => (
+                          <div key={att.id} className="relative group rounded-md overflow-hidden border border-border w-16 h-16">
+                            {att.type === 'image' ? (
+                              <img src={att.url} alt={att.name} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-background">
+                                <FileText size={24} className="text-muted-foreground" />
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    
+                    <span className="text-[10px] text-muted-foreground px-1">
+                      {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                ))}
+                
+                {isTyping && (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <div className="w-2 h-2 rounded-full bg-primary/50 animate-bounce" />
+                    <div className="w-2 h-2 rounded-full bg-primary/50 animate-bounce delay-75" />
+                    <div className="w-2 h-2 rounded-full bg-primary/50 animate-bounce delay-150" />
+                  </div>
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+            </ScrollArea>
+          </div>
 
           <div className="p-4 border-t border-border bg-background/50">
             {suggestions.length > 0 && (
@@ -403,41 +418,60 @@ User message: "${userMessage}"`
           </div>
         </TabsContent>
 
-        <TabsContent value="voice" className="flex-1 flex flex-col items-center justify-center p-6 text-center mt-0 space-y-6">
-          <div className={`w-32 h-32 rounded-full flex items-center justify-center transition-all duration-500 ${isVoiceListening ? 'bg-primary/20 shadow-[0_0_40px_rgba(var(--primary),0.3)]' : 'bg-muted'}`}>
-            <div className={`w-24 h-24 rounded-full flex items-center justify-center bg-background transition-transform ${isVoiceListening ? 'scale-110' : 'scale-100'}`}>
-              <Microphone 
-                size={40} 
-                weight={isVoiceListening ? "fill" : "regular"}
-                className={isVoiceListening ? "text-primary animate-pulse" : "text-muted-foreground"} 
-              />
+        <TabsContent value="voice" className="flex-1 flex flex-col min-h-0 mt-0">
+          <div className="flex-1 flex flex-col items-center justify-center p-6 text-center space-y-6">
+            <div className={`w-32 h-32 rounded-full flex items-center justify-center transition-all duration-500 ${isVoiceListening ? 'bg-primary/20 shadow-[0_0_40px_rgba(var(--primary),0.3)]' : 'bg-muted'}`}>
+              <div className={`w-24 h-24 rounded-full flex items-center justify-center bg-background transition-transform ${isVoiceListening ? 'scale-110' : 'scale-100'}`}>
+                <Microphone 
+                  size={40} 
+                  weight={isVoiceListening ? "fill" : "regular"}
+                  className={isVoiceListening ? "text-primary animate-pulse" : "text-muted-foreground"} 
+                />
+              </div>
             </div>
-          </div>
-          
-          <div>
-            <h3 className="text-lg font-semibold mb-2">Voice Control</h3>
-            <p className="text-sm text-muted-foreground max-w-[250px] mx-auto">
-              {isVoiceListening 
-                ? "Listening... Speak naturally to control the simulation." 
-                : "Tap the microphone to start voice commands."}
-            </p>
+            
+            <div>
+              <h3 className="text-lg font-semibold mb-2">Voice Control</h3>
+              <p className="text-sm text-muted-foreground max-w-[250px] mx-auto">
+                {isVoiceListening 
+                  ? "Listening... Speak naturally to control the simulation." 
+                  : "Tap the microphone to start voice commands."}
+              </p>
+            </div>
+
+            <Button 
+              size="lg" 
+              variant={isVoiceListening ? "destructive" : "default"}
+              onClick={() => setIsVoiceListening(!isVoiceListening)}
+              className="w-full max-w-[200px]"
+            >
+              {isVoiceListening ? "Stop Listening" : "Start Listening"}
+            </Button>
+
+            {isVoiceListening && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 px-3 py-1 rounded-full">
+                <SpeakerHigh size={14} />
+                <span>Voice output active</span>
+              </div>
+            )}
           </div>
 
-          <Button 
-            size="lg" 
-            variant={isVoiceListening ? "destructive" : "default"}
-            onClick={() => setIsVoiceListening(!isVoiceListening)}
-            className="w-full max-w-[200px]"
-          >
-            {isVoiceListening ? "Stop Listening" : "Start Listening"}
-          </Button>
-
-          {isVoiceListening && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 px-3 py-1 rounded-full">
-              <SpeakerHigh size={14} />
-              <span>Voice output active</span>
-            </div>
-          )}
+          <div className="p-4 border-t border-border bg-background/50">
+            <h4 className="text-xs font-semibold text-muted-foreground mb-3 uppercase tracking-wide">Try saying:</h4>
+            <ScrollArea className="h-32">
+              <div className="space-y-2 pr-3">
+                {VOICE_SUGGESTIONS.map(s => (
+                  <div 
+                    key={s.id}
+                    className="flex items-center justify-between p-2 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
+                  >
+                    <span className="text-sm">{s.text}</span>
+                    <Badge variant="outline" className="text-[10px] h-5">{s.category}</Badge>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+          </div>
         </TabsContent>
       </Tabs>
     </Card>
