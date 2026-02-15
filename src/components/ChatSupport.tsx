@@ -14,54 +14,52 @@ import {
   X
 } from '@phosphor-icons/react'
 
+interface ChatMessage {
   id: string
-  content: s
+  role: 'user' | 'assistant'
+  content: string
+  timestamp: number
 }
-const DEFAULT_SUG
-  { id: '2', text: 
+
+const DEFAULT_SUGGESTIONS = [
+  { id: '1', text: 'How does collision avoidance work?', category: 'feature' as const },
+  { id: '2', text: 'What is the learning rate?', category: 'metric' as const },
+  { id: '3', text: 'How can I optimize performance?', category: 'question' as const }
 ]
 
-  const [messages, setMessage
+export function ChatSupport() {
+  const [isOpen, setIsOpen] = useState(false)
+  const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [inputValue, setInputValue] = useState('')
   const [isTyping, setIsTyping] = useState(false)
+  const [unreadCount, setUnreadCount] = useState(0)
   const [suggestions, setSuggestions] = useState(DEFAULT_SUGGESTIONS)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
 
- 
-
+  useEffect(() => {
+    if (isOpen) {
+      setUnreadCount(0)
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }
   }, [isOpen, messages])
-  const generateAIResponse = async (userMessa
-      const contextMessages = conversationHistory.slice(-3).m
-      ).join('\n')
-      const promptText = `You are a helpful AI as
 
+  const generateAIResponse = async (userMessage: string, conversationHistory: ChatMessage[]) => {
+    try {
+      const contextMessages = conversationHistory.slice(-3).map(
+        msg => `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`
+      ).join('\n')
+
+      const promptText = `You are a helpful AI assistant for a warehouse robotics simulation platform. Answer questions about the simulation, robotics, AI features, and help users understand the system.
+
+Context:
 ${contextMessages}
 User message: "${userMessage}"
 
-      const respons
-    } catch (erro
-      return "I can hel
-  }
-  con
+Provide a helpful, concise response.`
 
-
-      const response = await window.spark.llm(promptText, 'gpt-4o-mini', true)
-        c
-          return parsed.suggestions.map((s: any, idx: number) => ({
-            text: s.text,
-          }))
-
-      console.error('Failed to generate suggestions', error)
-
-
-  const handleSubmit =
-
-
-      id: `msg-${Date.now()}`,
-
-    }
-
-    setIsTyping(true)
-    setTimeout(async 
-
+      const response = await window.spark.llm(promptText, 'gpt-4o-mini')
+      return response || "I can help you with that! The simulation shows real-time warehouse robotics with AI-powered path planning and collision avoidance. Try asking about specific metrics or features you'd like to understand better."
+    } catch (error) {
       console.error('AI Error:', error)
       return "I can help you with that! The simulation shows real-time warehouse robotics with AI-powered path planning and collision avoidance. Try asking about specific metrics or features you'd like to understand better."
     }
@@ -172,7 +170,7 @@ User message: "${userMessage}"
             </Button>
           )}
           <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)} className="h-8 w-8">
-          )}
+            <X size={16} />
           </Button>
         </div>
       </div>
@@ -199,7 +197,7 @@ User message: "${userMessage}"
                   'max-w-[80%] space-y-2'
                 )}
               >
-
+                <div
                   className={cn(
                     'p-3 rounded-2xl text-sm',
                     msg.role === 'user' 
@@ -222,7 +220,7 @@ User message: "${userMessage}"
           {isTyping && (
             <div className="flex justify-start">
               <div className="bg-muted p-3 rounded-2xl">
-
+                <div className="flex gap-1">
                   <div className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                   <div className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                   <div className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
@@ -244,11 +242,11 @@ User message: "${userMessage}"
                 variant="outline" 
                 className="cursor-pointer hover:bg-accent/10 transition-colors"
                 onClick={() => handleSuggestionClick(suggestion)}
-
+              >
                 {suggestion.text}
               </Badge>
             ))}
-
+          </div>
         )}
 
         <form onSubmit={handleSubmit} className="flex gap-2">
@@ -263,6 +261,6 @@ User message: "${userMessage}"
           </Button>
         </form>
       </div>
-
+    </Card>
   )
-
+}
