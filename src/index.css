@@ -80,13 +80,8 @@
 
 body {
   font-family: var(--font-body);
-}
 
 .font-mono {
-  font-family: var(--font-mono);
-}
-
-@keyframes pulse-glow {
   0%, 100% {
     box-shadow: 0 0 20px oklch(0.75 0.20 145 / 0.3);
   }
