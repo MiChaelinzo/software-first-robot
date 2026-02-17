@@ -1315,9 +1315,6 @@ Analyze this robotics system and provide 2-3 specific, actionable optimization s
               </h1>
               <p className="text-sm text-muted-foreground">
                 AI-Powered Robotics Simulation
-                {currentUser && (
-                  <span className="ml-2 text-accent">• {currentUser.name}</span>
-                )}
               </p>
             </div>
           </div>
