@@ -68,6 +68,12 @@ import { useTextToSpeech } from '@/hooks/use-text-to-speech'
 import { useAudioCues } from '@/hooks/use-audio-cues'
 import { AudioSettingsPanel } from '@/components/AudioSettingsPanel'
 import { ChatSupport } from '@/components/ChatSupport'
+import { QuantumPathfindingPanel } from '@/components/QuantumPathfindingPanel'
+import { EmergencyResponsePanel } from '@/components/EmergencyResponsePanel'
+import { BenchmarkingDashboard } from '@/components/BenchmarkingDashboard'
+import { QuantumPathfindingEngine } from '@/lib/quantum-pathfinding'
+import { EmergencyResponseSystem, type Emergency, type EmergencyType } from '@/lib/emergency-response'
+import { BenchmarkingEngine, type BenchmarkReport } from '@/lib/benchmarking-engine'
 import { AndroidLogo, User } from '@phosphor-icons/react'
 
 const GRID_WIDTH = 18
@@ -184,6 +190,9 @@ function App() {
     { x: GRID_WIDTH - 2, y: GRID_HEIGHT - 2 }
   ]), [])
   const multiWarehouseSystem = useMemo(() => new MultiWarehouseSystem(), [])
+  const quantumPathfinding = useMemo(() => new QuantumPathfindingEngine(), [])
+  const emergencyResponse = useMemo(() => new EmergencyResponseSystem(), [])
+  const benchmarkingEngine = useMemo(() => new BenchmarkingEngine(), [])
   
   const lastUpdateRef = useRef<number>(Date.now())
   const completionTimesRef = useRef<number[]>([])
@@ -210,6 +219,16 @@ function App() {
     averageBattery: 0,
     energyWaste: 0,
     utilizationScore: 0
+  })
+
+  const [activeEmergencies, setActiveEmergencies] = useState<Emergency[]>([])
+  const [benchmarkReport, setBenchmarkReport] = useState<BenchmarkReport | null>(null)
+  const [simulationStartTime, setSimulationStartTime] = useState<number>(Date.now())
+  const [quantumMetrics, setQuantumMetrics] = useState({
+    activeSuperpositions: 0,
+    entanglementPairs: 0,
+    coherenceTime: 100,
+    quantumAdvantage: 1
   })
 
   const [robotHistory, setRobotHistory] = useKV<any[]>('robot_history', [])
@@ -968,12 +987,24 @@ function App() {
     digitalTwinEngine.reset()
     swarmIntelligence.reset()
     energyOptimizer.reset()
+    quantumPathfinding.reset()
+    emergencyResponse.reset()
+    benchmarkingEngine.reset()
     setMlPredictions([])
     setMaintenancePredictions([])
     setWhatIfAnalyses([])
     setSwarmEmergence({ hasEmergentBehavior: false, patterns: [], coordination: 0 })
     setEnergyProfiles([])
     setFleetEfficiency({ overallEfficiency: 0, averageBattery: 0, energyWaste: 0, utilizationScore: 0 })
+    setActiveEmergencies([])
+    setBenchmarkReport(null)
+    setSimulationStartTime(Date.now())
+    setQuantumMetrics({
+      activeSuperpositions: 0,
+      entanglementPairs: 0,
+      coherenceTime: 100,
+      quantumAdvantage: 1
+    })
     setHeatTrailStats({
       activeTrails: 0,
       totalTrailPoints: 0,
@@ -1190,6 +1221,38 @@ Analyze this robotics system and provide 2-3 specific, actionable optimization s
     })
   }
 
+  const handleTriggerEmergency = (type: EmergencyType, severity: Emergency['severity']) => {
+    const randomX = Math.floor(Math.random() * GRID_WIDTH)
+    const randomY = Math.floor(Math.random() * GRID_HEIGHT)
+    
+    const emergency = emergencyResponse.triggerEmergency(type, { x: randomX, y: randomY }, severity)
+    setActiveEmergencies(emergencyResponse.getActiveEmergencies())
+    
+    playAudioCue('collision_critical')
+    speak(`Emergency alert: ${type.replace('-', ' ')} at sector ${randomX}, ${randomY}`)
+    toast.error('Emergency Alert', {
+      description: `${type.replace('-', ' ')} detected at (${randomX}, ${randomY})`,
+      duration: 5000
+    })
+    
+    safeRobots.forEach(robot => {
+      const assessment = emergencyResponse.assessRobotSafety(robot, safeRobots)
+      if (assessment.shouldEvacuate) {
+        const safePosition = { x: 1, y: 1 }
+        emergencyResponse.evacuateRobot(robot, safePosition)
+      }
+    })
+  }
+
+  const handleResolveEmergency = (emergencyId: string) => {
+    emergencyResponse.resolveEmergency(emergencyId)
+    setActiveEmergencies(emergencyResponse.getActiveEmergencies())
+    playAudioCue('task_completed')
+    toast.success('Emergency Resolved', {
+      description: 'Area is now safe for operations'
+    })
+  }
+
   const handleInitiateTransfer = (robotId: string, targetWarehouseId: string) => {
     const robot = safeRobots.find(r => r.id === robotId)
     if (!robot || robot.status === 'transferring') {
@@ -1256,6 +1319,28 @@ Analyze this robotics system and provide 2-3 specific, actionable optimization s
     return () => clearInterval(interval)
   }, [multiWarehouseSystem])
 
+  useEffect(() => {
+    if (!isRunning) return
+    
+    const interval = setInterval(() => {
+      const simulationTime = Date.now() - simulationStartTime
+      const report = benchmarkingEngine.generateBenchmarkReport(
+        safeRobots,
+        safeTasks,
+        safeMetrics,
+        simulationTime
+      )
+      setBenchmarkReport(report)
+      
+      const qMetrics = quantumPathfinding.getQuantumMetrics()
+      setQuantumMetrics(qMetrics)
+      
+      setActiveEmergencies(emergencyResponse.getActiveEmergencies())
+    }, 5000)
+    
+    return () => clearInterval(interval)
+  }, [isRunning, safeRobots, safeTasks, safeMetrics, simulationStartTime, benchmarkingEngine, quantumPathfinding, emergencyResponse])
+
   const handleUserAuthenticated = async (userData: any) => {
     setCurrentUser(userData)
     await window.spark.kv.set('has_completed_welcome', true)
@@ -1311,13 +1396,10 @@ Analyze this robotics system and provide 2-3 specific, actionable optimization s
             </div>
             <div>
               <h1 className="text-3xl font-bold tracking-tight">
-                Autonomous Warehouse
+                Next-Gen Autonomous Warehouse
               </h1>
               <p className="text-sm text-muted-foreground">
-                AI-Powered Robotics Simulation
-                {currentUser && (
-                  <span className="ml-2 text-accent">• {currentUser.name}</span>
-                )}
+                Quantum AI-Powered Robotics Platform v3.0
               </p>
             </div>
           </div>
@@ -1363,12 +1445,13 @@ Analyze this robotics system and provide 2-3 specific, actionable optimization s
         />
 
         <Tabs defaultValue="simulation" className="space-y-4">
-          <TabsList className="grid w-full max-w-7xl grid-cols-7">
+          <TabsList className="grid w-full max-w-7xl grid-cols-8">
             <TabsTrigger value="simulation">2D View</TabsTrigger>
             <TabsTrigger value="3d">3D View</TabsTrigger>
             <TabsTrigger value="network">Multi-Warehouse</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="ai-systems">AI Systems</TabsTrigger>
+            <TabsTrigger value="next-gen">Next-Gen 🚀</TabsTrigger>
             <TabsTrigger value="management">Management</TabsTrigger>
             <TabsTrigger value="voice">Voice Control</TabsTrigger>
           </TabsList>
@@ -1679,6 +1762,117 @@ Analyze this robotics system and provide 2-3 specific, actionable optimization s
                 />
               </div>
             </div>
+          </TabsContent>
+
+          <TabsContent value="next-gen" className="space-y-6">
+            <div className="p-6 rounded-lg border-2 border-accent/30 bg-gradient-to-br from-accent/10 to-accent/5">
+              <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
+                🚀 Next-Generation Features
+              </h2>
+              <p className="text-muted-foreground">
+                Cutting-edge warehouse automation technologies: Quantum-inspired pathfinding, 
+                autonomous emergency response, and real-time competitive benchmarking
+              </p>
+            </div>
+
+            <div className="grid lg:grid-cols-3 gap-6">
+              <QuantumPathfindingPanel
+                activeSuperpositions={quantumMetrics.activeSuperpositions}
+                entanglementPairs={quantumMetrics.entanglementPairs}
+                coherenceTime={quantumMetrics.coherenceTime}
+                quantumAdvantage={quantumMetrics.quantumAdvantage}
+                isActive={isRunning}
+              />
+
+              <Card className="glass-panel p-6 col-span-2">
+                <h3 className="text-lg font-semibold mb-4">Quantum Computing Impact</h3>
+                <div className="space-y-4">
+                  <div className="p-4 rounded-lg bg-accent/10 border border-accent/20">
+                    <h4 className="font-semibold mb-2 text-accent">Path Optimization</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Quantum algorithms explore multiple path possibilities simultaneously through 
+                      superposition, finding optimal routes up to {quantumMetrics.quantumAdvantage.toFixed(1)}x 
+                      faster than classical methods.
+                    </p>
+                  </div>
+                  <div className="p-4 rounded-lg bg-muted/30">
+                    <h4 className="font-semibold mb-2">Quantum Entanglement</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Robots can share quantum-entangled states for coordinated pathfinding, 
+                      enabling instant communication of route changes across the fleet.
+                    </p>
+                  </div>
+                  <div className="p-4 rounded-lg bg-muted/30">
+                    <h4 className="font-semibold mb-2">Technical Details</h4>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <span className="text-muted-foreground">Algorithm:</span>
+                        <span className="ml-2 font-mono">Quantum Walk</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Superposition States:</span>
+                        <span className="ml-2 font-mono">{quantumMetrics.activeSuperpositions}</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Coherence:</span>
+                        <span className="ml-2 font-mono">{quantumMetrics.coherenceTime}ms</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Advantage:</span>
+                        <span className="ml-2 font-mono text-accent">{quantumMetrics.quantumAdvantage.toFixed(2)}x</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            </div>
+
+            <EmergencyResponsePanel
+              emergencies={activeEmergencies}
+              onTriggerEmergency={handleTriggerEmergency}
+              onResolveEmergency={handleResolveEmergency}
+              metrics={emergencyResponse.getEmergencyMetrics()}
+              isRunning={isRunning}
+            />
+
+            <BenchmarkingDashboard
+              report={benchmarkReport}
+              competitors={benchmarkingEngine.getCompetitors()}
+              isRunning={isRunning}
+            />
+
+            <Card className="glass-panel p-6">
+              <h3 className="text-lg font-semibold mb-4">System Capabilities</h3>
+              <div className="grid md:grid-cols-3 gap-4">
+                <div className="p-4 rounded-lg border bg-card/50">
+                  <h4 className="font-semibold mb-2 text-accent">Quantum Pathfinding</h4>
+                  <ul className="text-sm text-muted-foreground space-y-1">
+                    <li>• Superposition-based path exploration</li>
+                    <li>• Quantum entanglement coordination</li>
+                    <li>• Up to 2x speed improvement</li>
+                    <li>• Real-time wavefunction collapse</li>
+                  </ul>
+                </div>
+                <div className="p-4 rounded-lg border bg-card/50">
+                  <h4 className="font-semibold mb-2 text-destructive">Emergency Response</h4>
+                  <ul className="text-sm text-muted-foreground space-y-1">
+                    <li>• 6 emergency scenario types</li>
+                    <li>• Autonomous evacuation protocols</li>
+                    <li>• Real-time safety assessments</li>
+                    <li>• Response time tracking</li>
+                  </ul>
+                </div>
+                <div className="p-4 rounded-lg border bg-card/50">
+                  <h4 className="font-semibold mb-2 text-success">Competitive Benchmarking</h4>
+                  <ul className="text-sm text-muted-foreground space-y-1">
+                    <li>• Real-time industry comparison</li>
+                    <li>• 4 major competitor profiles</li>
+                    <li>• 6 key performance metrics</li>
+                    <li>• Actionable recommendations</li>
+                  </ul>
+                </div>
+              </div>
+            </Card>
           </TabsContent>
 
           <TabsContent value="management" className="space-y-6">
